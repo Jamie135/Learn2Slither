@@ -6,12 +6,18 @@ from pygame import KEYDOWN, KEYUP, K_UP, K_DOWN, K_LEFT, K_RIGHT
 
 
 SCREEN_SIZE = (400, 400)
+BLOCK_SIZE = 40
 
 
 class Snake:
     def __init__(self, parent_screen, length=3):
         self.length = length
         self.parent_screen = parent_screen
+        self.head = pygame.image.load("images/snakehead.jpg")
+        self.body = pygame.image.load("images/snakebody.jpg")
+        self.x = [BLOCK_SIZE] * length
+        self.y = [BLOCK_SIZE] * length
+        self.direction = "RIGHT"
 
 
 class Apple:
