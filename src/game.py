@@ -3,14 +3,41 @@ import json
 import random
 import pygame
 from pygame import KEYDOWN, KEYUP, K_UP, K_DOWN, K_LEFT, K_RIGHT
-from pygame.locals import QUIT
+
+
+SCREEN_SIZE = (400, 400)
+
+
+class Snake:
+    def __init__(self, parent_screen, length=3):
+        self.length = length
+        self.parent_screen = parent_screen
+
+
+class Apple:
+    pass
+
 
 class Game:
     def __init__(self):
         pygame.init()
-        self.screen = pygame.display.set_mode((100, 100))
         pygame.display.set_caption("Snake Game")
-        self.clock = pygame.time.Clock()
-        self.snake = [(5, 5)]
-        self.food = (random.randint(0, 9), random.randint(0, 9))
-        self.direction = K_RIGHT
+        self.SCREEN_UPDATE = pygame.USEREVENT
+        pygame.time.set_timer(self.SCREEN_UPDATE, 300)
+        self.surface = pygame.display.set_mode(SCREEN_SIZE)
+
+    def run(self):
+        running = True
+        while running:
+            self.surface.fill((0, 0, 0))
+            # Handle events
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
+            # Update the display
+            pygame.display.update()
+
+
+game = Game()
+game.run()
