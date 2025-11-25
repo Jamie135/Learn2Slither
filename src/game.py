@@ -32,6 +32,25 @@ class Game:
         )
         self.snake.draw()
 
+    def start_text(self):
+        """Display a start message before the game begins."""
+        font = pygame.font.SysFont(None, 48)
+        text = "Press an arrow key to start"
+        color = (255, 255, 255)
+        shadow_color = (0, 0, 0)
+
+        text_surface = font.render(text, True, color)
+        shadow_surface = font.render(text, True, shadow_color)
+
+        rect = text_surface.get_rect(
+            center=(self.surface.get_width() // 2, self.surface.get_height() // 2),
+        )
+
+        # Draw a simple shadow for better readability
+        shadow_rect = rect.move(2, 2)
+        self.surface.blit(shadow_surface, shadow_rect)
+        self.surface.blit(text_surface, rect)
+
     def play(self):
         """Move the snake and draw the apple."""
         self.snake.move()
@@ -48,15 +67,17 @@ class Game:
             for event in pygame.event.get():
 
                 if event.type == KEYDOWN:
-                    if event.key == K_RETURN:
-                        started = True
                     if event.key == K_UP:
+                        started = True
                         self.snake.move_up()
                     if event.key == K_DOWN:
+                        started = True
                         self.snake.move_down()
                     if event.key == K_LEFT:
+                        started = True
                         self.snake.move_left()
                     if event.key == K_RIGHT:
+                        started = True
                         self.snake.move_right()
 
                 if event.type == pygame.QUIT:
@@ -64,5 +85,8 @@ class Game:
                 elif event.type == self.SCREEN_UPDATE:
                     if started:
                         self.play()
+            # If the game hasn't started yet, overlay the start text.
+            if not started:
+                self.start_text()
             # Update the display
             pygame.display.update()
