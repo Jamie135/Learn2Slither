@@ -6,6 +6,7 @@ BLOCK_SIZE = 40
 
 class Snake:
     def __init__(self, parent_screen, grid_size, length=3):
+        """Initialise the snake."""
         self.length = length
         self.parent_screen = parent_screen
         self.grid_size = grid_size
@@ -104,8 +105,33 @@ class Snake:
         # shifting the whole snake one cell inward if necessary.
         self.avoid_collision()
 
+    def avoid_collision(self):
+        """Shift the snake inward if its first move would hit a wall."""
+        playable_min = 1
+        playable_max = self.grid_size - 2
+
+        head_col = self.x[0] // BLOCK_SIZE
+        head_row = self.y[0] // BLOCK_SIZE
+
+        dx = 0
+        dy = 0
+
+        if self.direction == "LEFT" and head_col == playable_min:
+            dx = BLOCK_SIZE
+        elif self.direction == "RIGHT" and head_col == playable_max:
+            dx = -BLOCK_SIZE
+        elif self.direction == "UP" and head_row == playable_min:
+            dy = BLOCK_SIZE
+        elif self.direction == "DOWN" and head_row == playable_max:
+            dy = -BLOCK_SIZE
+
+        if dx != 0 or dy != 0:
+            for i in range(self.length):
+                self.x[i] += dx
+                self.y[i] += dy
+
     def draw(self):
-        """Draw the snake on the screen."""
+        """Draw the full map and the snake on the screen."""
         # Draw background grid (playable area) and walls, then snake segments
         self.draw_background_grid()
         self.draw_walls()
@@ -210,28 +236,3 @@ class Snake:
         if self.direction == "DOWN":
             self.y[0] += BLOCK_SIZE
         self.draw()
-
-    def avoid_collision(self):
-        """Shift the snake inward if its first move would hit a wall."""
-        playable_min = 1
-        playable_max = self.grid_size - 2
-
-        head_col = self.x[0] // BLOCK_SIZE
-        head_row = self.y[0] // BLOCK_SIZE
-
-        dx = 0
-        dy = 0
-
-        if self.direction == "LEFT" and head_col == playable_min:
-            dx = BLOCK_SIZE
-        elif self.direction == "RIGHT" and head_col == playable_max:
-            dx = -BLOCK_SIZE
-        elif self.direction == "UP" and head_row == playable_min:
-            dy = BLOCK_SIZE
-        elif self.direction == "DOWN" and head_row == playable_max:
-            dy = -BLOCK_SIZE
-
-        if dx != 0 or dy != 0:
-            for i in range(self.length):
-                self.x[i] += dx
-                self.y[i] += dy

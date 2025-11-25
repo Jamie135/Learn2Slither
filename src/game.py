@@ -1,6 +1,6 @@
 import pygame
 from snake import Snake
-from apple import GreenApple
+from apple import Apple
 from pygame import KEYDOWN, K_UP, K_DOWN, K_LEFT, K_RIGHT, K_RETURN
 
 
@@ -21,17 +21,23 @@ class Game:
         pygame.init()
         pygame.display.set_caption("Snake Game")
         self.SCREEN_UPDATE = pygame.USEREVENT
-        pygame.time.set_timer(self.SCREEN_UPDATE, 300)
+        pygame.time.set_timer(self.SCREEN_UPDATE, 400)
         self.surface = pygame.display.set_mode(screen_size)
         # Snake and apple receive the total grid size (including walls)
         self.snake = Snake(self.surface, self.grid_size)
-        self.greenApple = GreenApple(self.surface, self.grid_size)
+        self.green_apples, self.red_apple = Apple.spawn_apples(
+            self.surface,
+            self.grid_size,
+            self.snake,
+        )
         self.snake.draw()
 
     def play(self):
         """Move the snake and draw the apple."""
         self.snake.move()
-        self.greenApple.draw()
+        for apple in self.green_apples:
+            apple.draw()
+        self.red_apple.draw()
 
     def run(self):
         """Run the game."""
