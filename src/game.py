@@ -1,14 +1,13 @@
-import random
 import pygame
-import argparse
-from pygame import KEYDOWN, KEYUP, K_UP, K_DOWN, K_LEFT, K_RIGHT
+import random
+from pygame import KEYDOWN, K_UP, K_DOWN, K_LEFT, K_RIGHT
 
 
 BLOCK_SIZE = 40
 
 
 class Snake:
-    def __init__(self, parent_screen, grid_size, length=3):  # Fixed syntax error
+    def __init__(self, parent_screen, grid_size, length=3):
         self.length = length
         self.parent_screen = parent_screen
         self.grid_size = grid_size
@@ -21,28 +20,76 @@ class Snake:
         self.direction = "RIGHT"
 
     def draw(self):
-        self.parent_screen.fill((0, 0, 0))
-        # Draw walls
+        """Draw the snake on the screen."""
+        # Draw background grid (playable area) and walls, then snake segments
+        self.draw_background_grid()
         self.draw_walls()
-        # Draw the head (first segment)
+        self.draw_snake()
+
+    def draw_snake(self):
+        """Draw the snake on the screen."""
+        # Draw the head of the snake (first segment)
         self.parent_screen.blit(self.head, (self.x[0], self.y[0]))
-        # Draw the body (remaining segments)
+        # Draw the body of the snake(remaining segments)
         for i in range(1, self.length):
             self.parent_screen.blit(self.body, (self.x[i], self.y[i]))
 
+    def draw_background_grid(self):
+        """Draw a grid for the playable area."""
+        light_grey = (200, 200, 200)
+        white = (240, 240, 240)
+
+        # Indices 0 and grid_size - 1 are reserved for walls.
+        for row in range(1, self.grid_size - 1):
+            for col in range(1, self.grid_size - 1):
+                color = light_grey if (row + col) % 2 == 0 else white
+                pygame.draw.rect(
+                    self.parent_screen,
+                    color,
+                    (
+                        col * BLOCK_SIZE,
+                        row * BLOCK_SIZE,
+                        BLOCK_SIZE,
+                        BLOCK_SIZE,
+                    ),
+                )
+
     def draw_walls(self):
+        """Draw the walls around the playable area."""
         # Draw top and bottom walls
         for i in range(self.grid_size):
-            pygame.draw.rect(self.parent_screen, (100, 100, 100), 
-                           (i * BLOCK_SIZE, 0, BLOCK_SIZE, BLOCK_SIZE))
-            pygame.draw.rect(self.parent_screen, (100, 100, 100), 
-                           (i * BLOCK_SIZE, (self.grid_size - 1) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+            pygame.draw.rect(
+                self.parent_screen,
+                (100, 100, 100),
+                (i * BLOCK_SIZE, 0, BLOCK_SIZE, BLOCK_SIZE),
+            )
+            pygame.draw.rect(
+                self.parent_screen,
+                (100, 100, 100),
+                (
+                    i * BLOCK_SIZE,
+                    (self.grid_size - 1) * BLOCK_SIZE,
+                    BLOCK_SIZE,
+                    BLOCK_SIZE,
+                ),
+            )
         # Draw left and right walls
         for i in range(1, self.grid_size - 1):
-            pygame.draw.rect(self.parent_screen, (100, 100, 100), 
-                           (0, i * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
-            pygame.draw.rect(self.parent_screen, (100, 100, 100), 
-                           ((self.grid_size - 1) * BLOCK_SIZE, i * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE))
+            pygame.draw.rect(
+                self.parent_screen,
+                (100, 100, 100),
+                (0, i * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE),
+            )
+            pygame.draw.rect(
+                self.parent_screen,
+                (100, 100, 100),
+                (
+                    (self.grid_size - 1) * BLOCK_SIZE,
+                    i * BLOCK_SIZE,
+                    BLOCK_SIZE,
+                    BLOCK_SIZE,
+                ),
+            )
 
     def increase(self):
         self.length += 1
@@ -100,31 +147,32 @@ class GreenApple:
 
 class Game:
     def __init__(self, grid_size):
-        # Validate minimum grid size
-        # Theoretical minimum: 6x6 (4x4 play area for 13 segments + 1 apple)
-        # Practical minimum: 10x10 (8x8 play area for comfortable gameplay)
-        if grid_size < 10:
-            print("Error: Grid size must be at least 10x10 (8x8 play area + 2 walls)")
-            print("Using minimum grid size of 10x10")
-            grid_size = 10
-        
-        self.grid_size = grid_size
-        screen_size = (grid_size * BLOCK_SIZE, grid_size * BLOCK_SIZE)
-        
+        """Initialise the game."""
+        self.playable_grid_size = grid_size
+        # Total grid, including the surrounding wall layer
+        self.grid_size = grid_size + 2
+        screen_size = (
+            self.grid_size * BLOCK_SIZE,
+            self.grid_size * BLOCK_SIZE,
+        )
+
         pygame.init()
         pygame.display.set_caption("Snake Game")
         self.SCREEN_UPDATE = pygame.USEREVENT
         pygame.time.set_timer(self.SCREEN_UPDATE, 300)
         self.surface = pygame.display.set_mode(screen_size)
-        self.snake = Snake(self.surface, grid_size)
-        self.greenApple = GreenApple(self.surface, grid_size)
+        # Snake and apple receive the total grid size (including walls)
+        self.snake = Snake(self.surface, self.grid_size)
+        self.greenApple = GreenApple(self.surface, self.grid_size)
         self.snake.draw()
 
     def play(self):
+        """Move the snake and draw the apple."""
         self.snake.move()
         self.greenApple.draw()
 
     def run(self):
+        """Run the game."""
         running = True
         while running:
             # Handle events
@@ -146,20 +194,3 @@ class Game:
                     self.play()
             # Update the display
             pygame.display.update()
-
-
-if __name__ == "__main__":
-    # Parse command line arguments using argparse
-    parser = argparse.ArgumentParser(description='Snake Game - Learn2Slither')
-    parser.add_argument(
-        'grid_size',
-        type=int,
-        nargs='?',
-        default=12,
-        help='Grid size (minimum 10x10, default 12x12)'
-    )
-    
-    args = parser.parse_args()
-    
-    game = Game(args.grid_size)
-    game.run()
