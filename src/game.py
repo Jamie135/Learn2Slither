@@ -74,13 +74,53 @@ class Game:
     def play(self):
         """Move the snake and draw the apple."""
         self.snake.move()
+        self.eats_apple()
+        # If eating a red apple reduced the length to 0, the game is over;
+        # avoid accessing self.snake.x[0] which would raise IndexError.
+        if self.game_over or self.snake.length == 0:
+            return
         for apple in self.green_apples:
             apple.draw()
         self.red_apple.draw()
-        self._check_wall_collision()
+        self.check_wall_collision()
+        self.check_self_collision()
 
-    def _check_wall_collision(self):
+    def eats_apple(self):
+        """Handle collisions between the snake's head and apples."""
+        head_pos = (self.snake.x[0], self.snake.y[0])
+
+        # Green apples: increase length and respawn the eaten apple.
+        for apple in self.green_apples:
+            if (apple.x, apple.y) == head_pos:
+                self.snake.increase()
+                # Build occupied positions: snake + all other apples.
+                occupied = {
+                    (self.snake.x[i], self.snake.y[i]) for i in range(self.snake.length)
+                }
+                for other in self.green_apples:
+                    if other is not apple:
+                        occupied.add((other.x, other.y))
+                occupied.add((self.red_apple.x, self.red_apple.y))
+                apple.randomize_position(occupied)
+
+        # Red apple: decrease length and respawn, or end game if length is 0.
+        if (self.red_apple.x, self.red_apple.y) == head_pos:
+            self.snake.decrease()
+            if self.snake.length == 0:
+                self.game_over = True
+                return
+
+            occupied = {
+                (self.snake.x[i], self.snake.y[i]) for i in range(self.snake.length)
+            }
+            for apple in self.green_apples:
+                occupied.add((apple.x, apple.y))
+            self.red_apple.randomize_position(occupied)
+
+    def check_wall_collision(self):
         """Set game_over when the snake's head hits a wall."""
+        if self.snake.length == 0:
+            return
         head_col = self.snake.x[0] // BLOCK_SIZE
         head_row = self.snake.y[0] // BLOCK_SIZE
 
@@ -91,6 +131,16 @@ class Game:
             or head_row == self.grid_size - 1
         ):
             self.game_over = True
+
+    def check_self_collision(self):
+        """Set game_over when the snake's head collides with its own body."""
+        if self.snake.length == 0:
+            return
+        head_pos = (self.snake.x[0], self.snake.y[0])
+        for i in range(1, self.snake.length):
+            if (self.snake.x[i], self.snake.y[i]) == head_pos:
+                self.game_over = True
+                break
 
     def run(self):
         """Run the game."""
