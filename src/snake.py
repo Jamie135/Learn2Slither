@@ -83,7 +83,7 @@ class Snake:
                 raise ValueError("Snake length is too long.")
 
             start_idx = random.randint(0, len(path) - length)
-            segment = path[start_idx : start_idx + length]
+            segment = path[start_idx:start_idx + length]
 
             self.x = [col * BLOCK_SIZE for col, _ in segment]
             self.y = [row * BLOCK_SIZE for _, row in segment]

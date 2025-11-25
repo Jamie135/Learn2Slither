@@ -1,7 +1,16 @@
 import pygame
 from snake import Snake
 from apple import Apple
-from pygame import KEYDOWN, K_UP, K_DOWN, K_LEFT, K_RIGHT, K_RETURN, K_ESCAPE
+from pygame import (
+    KEYDOWN,
+    K_ESCAPE,
+    K_UP,
+    K_DOWN,
+    K_LEFT,
+    K_RIGHT,
+    K_1,
+    K_2,
+)
 
 
 BLOCK_SIZE = 40
@@ -18,11 +27,11 @@ class Game:
             self.grid_size * BLOCK_SIZE,
             self.grid_size * BLOCK_SIZE,
         )
-
+        self.timer = 400
         pygame.init()
         pygame.display.set_caption("Snake Game")
         self.SCREEN_UPDATE = pygame.USEREVENT
-        pygame.time.set_timer(self.SCREEN_UPDATE, 400)
+        pygame.time.set_timer(self.SCREEN_UPDATE, self.timer)
         self.surface = pygame.display.set_mode(screen_size)
         # Snake and apple receive the total grid size (including walls)
         self.snake = Snake(self.surface, self.grid_size)
@@ -44,7 +53,10 @@ class Game:
         shadow_surface = font.render(text, True, shadow_color)
 
         rect = text_surface.get_rect(
-            center=(self.surface.get_width() // 2, self.surface.get_height() // 2),
+            center=(
+                self.surface.get_width() // 2,
+                self.surface.get_height() // 2,
+            ),
         )
 
         # Draw a simple shadow for better readability
@@ -63,7 +75,10 @@ class Game:
         shadow_surface = font.render(text, True, shadow_color)
 
         rect = text_surface.get_rect(
-            center=(self.surface.get_width() // 2, self.surface.get_height() // 2),
+            center=(
+                self.surface.get_width() // 2,
+                self.surface.get_height() // 2,
+            ),
         )
 
         # Draw a simple shadow for better readability
@@ -95,7 +110,8 @@ class Game:
                 self.snake.increase()
                 # Build occupied positions: snake + all other apples.
                 occupied = {
-                    (self.snake.x[i], self.snake.y[i]) for i in range(self.snake.length)
+                    (self.snake.x[i], self.snake.y[i])
+                    for i in range(self.snake.length)
                 }
                 for other in self.green_apples:
                     if other is not apple:
@@ -111,7 +127,8 @@ class Game:
                 return
 
             occupied = {
-                (self.snake.x[i], self.snake.y[i]) for i in range(self.snake.length)
+                (self.snake.x[i], self.snake.y[i])
+                for i in range(self.snake.length)
             }
             for apple in self.green_apples:
                 occupied.add((apple.x, apple.y))
@@ -167,6 +184,25 @@ class Game:
                         if event.key == K_RIGHT:
                             started = True
                             self.snake.move_right()
+
+                        if event.key == K_2:
+                            # Increase speed: shorter interval between updates.
+                            self.timer -= 50
+                            if self.timer < 50:
+                                self.timer = 50
+                            pygame.time.set_timer(
+                                self.SCREEN_UPDATE,
+                                self.timer,
+                            )
+                        if event.key == K_1:
+                            # Decrease speed: longer interval between updates.
+                            self.timer += 50
+                            if self.timer > 800:
+                                self.timer = 800
+                            pygame.time.set_timer(
+                                self.SCREEN_UPDATE,
+                                self.timer,
+                            )
 
                 if event.type == pygame.QUIT:
                     running = False
