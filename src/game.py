@@ -42,6 +42,23 @@ class Game:
         )
         self.snake.draw()
 
+    def draw_snake_length(self):
+        """Display the current snake length on the screen."""
+        font = pygame.font.SysFont(None, 30)
+        text = f"Length: {self.snake.length}"
+        color = (255, 255, 255)
+        shadow_color = (0, 0, 0)
+
+        text_surface = font.render(text, True, color)
+        shadow_surface = font.render(text, True, shadow_color)
+
+        # Position near the top-left corner, with a small margin.
+        rect = text_surface.get_rect(topleft=(10, 10))
+        shadow_rect = rect.move(2, 2)
+
+        self.surface.blit(shadow_surface, shadow_rect)
+        self.surface.blit(text_surface, rect)
+
     def game_start_text(self):
         """Display a start message before the game begins."""
         font = pygame.font.SysFont(None, 48)
@@ -97,6 +114,7 @@ class Game:
         for apple in self.green_apples:
             apple.draw()
         self.red_apple.draw()
+        self.draw_snake_length()
         self.check_wall_collision()
         self.check_self_collision()
 
@@ -110,8 +128,7 @@ class Game:
                 self.snake.increase()
                 # Build occupied positions: snake + all other apples.
                 occupied = {
-                    (self.snake.x[i], self.snake.y[i])
-                    for i in range(self.snake.length)
+                    (self.snake.x[i], self.snake.y[i]) for i in range(self.snake.length)
                 }
                 for other in self.green_apples:
                     if other is not apple:
@@ -127,8 +144,7 @@ class Game:
                 return
 
             occupied = {
-                (self.snake.x[i], self.snake.y[i])
-                for i in range(self.snake.length)
+                (self.snake.x[i], self.snake.y[i]) for i in range(self.snake.length)
             }
             for apple in self.green_apples:
                 occupied.add((apple.x, apple.y))
