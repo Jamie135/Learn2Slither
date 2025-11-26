@@ -1,4 +1,5 @@
 from game import Game
+from player import Player
 import argparse
 
 
@@ -21,13 +22,17 @@ def parse_arguments():
         nargs="?",
         default=10,
     )
+    parser.add_argument("-player", action="store_true", help="Run the game without AI.")
     return parser.parse_args()
 
 
 def main():
     try:
         args = parse_arguments()
-        game = Game(args.grid_size)
+        if args.player:
+            game = Player(args.grid_size)
+        else:
+            game = Game(args.grid_size)
         game.run()
 
     except SystemExit:

@@ -5,6 +5,10 @@ from pygame import (
     KEYDOWN,
     K_ESCAPE,
     K_RETURN,
+    K_UP,
+    K_DOWN,
+    K_LEFT,
+    K_RIGHT,
     K_1,
     K_2,
 )
@@ -13,7 +17,7 @@ from pygame import (
 BLOCK_SIZE = 40
 
 
-class Game:
+class Player:
     def __init__(self, grid_size):
         """Initialise the game."""
         self.playable_grid_size = grid_size
@@ -183,45 +187,62 @@ class Game:
         )
         self.snake.draw()
 
-    def next_direction(self, action):
-        """Set the snake's direction based on the action input."""
-        pass
-        
-
     def run(self):
         """Run the game."""
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            elif event.type == self.SCREEN_UPDATE:
-                if not self.game_over:
-                    self.play()
-                    pygame.display.update()
-            elif event.type == KEYDOWN:
-                if event.key == K_ESCAPE and self.game_over:
-                    # After losing, Esc closes the game.
+        started = False
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
                     pygame.quit()
                     quit()
-                if event.key == K_RETURN and self.game_over:
-                    self.reset()
-                if not self.game_over:
+                elif event.type == self.SCREEN_UPDATE:
+                    if started and not self.game_over:
+                        self.play()
+                elif event.type == KEYDOWN:
+                    if event.key == K_ESCAPE and self.game_over:
+                        # After losing, Esc closes the game.
+                        pygame.quit()
+                        quit()
+                    if event.key == K_RETURN and self.game_over:
+                        self.reset()
+                        started = False
+                    if not self.game_over:
+                        if event.key == K_RETURN:
+                            started = True
+                        if event.key == K_UP:
+                            self.snake.move_up()
+                        if event.key == K_DOWN:
+                            self.snake.move_down()
+                        if event.key == K_LEFT:
+                            self.snake.move_left()
+                        if event.key == K_RIGHT:
+                            self.snake.move_right()
 
-                    if event.key == K_2:
-                        # Increase speed: shorter interval between updates.
-                        self.timer -= 50
-                        if self.timer < 50:
-                            self.timer = 50
-                        pygame.time.set_timer(
-                            self.SCREEN_UPDATE,
-                            self.timer,
-                        )
-                    if event.key == K_1:
-                        # Decrease speed: longer interval between updates.
-                        self.timer += 50
-                        if self.timer > 800:
-                            self.timer = 800
-                        pygame.time.set_timer(
-                            self.SCREEN_UPDATE,
-                            self.timer,
-                        )
+                        if event.key == K_2:
+                            # Increase speed: shorter interval between updates.
+                            self.timer -= 50
+                            if self.timer < 50:
+                                self.timer = 50
+                            pygame.time.set_timer(
+                                self.SCREEN_UPDATE,
+                                self.timer,
+                            )
+                        if event.key == K_1:
+                            # Decrease speed: longer interval between updates.
+                            self.timer += 50
+                            if self.timer > 800:
+                                self.timer = 800
+                            pygame.time.set_timer(
+                                self.SCREEN_UPDATE,
+                                self.timer,
+                            )
+            # If the game hasn't started yet, overlay the start text.
+            if not started and not self.game_over:
+                self.game_start_text()
+            # When game is over, show the game over message.
+            if self.game_over:
+                self.game_over_text()
+            # Update the display
+            pygame.display.update()
+
