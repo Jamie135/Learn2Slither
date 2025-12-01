@@ -1,26 +1,16 @@
-import pygame
 import random
 
 BLOCK_SIZE = 40
 
 
-class Apple:
-    def __init__(self, parent_screen, grid_size, occupied_positions, kind):
+class AppleTraining:
+    def __init__(self, grid_size, occupied_positions, kind):
         """
-        Initialise the apples.
+        Initialise the apples for training (no UI).
         """
-        self.parent_screen = parent_screen
         self.grid_size = grid_size
         self.kind = kind
-
-        if kind == "green":
-            image_path = "images/applegreen.png"
-        else:
-            image_path = "images/applered.png"
-
-        self.image = pygame.image.load(image_path)
-        # Place the apple at a random position inside the play area that does
-        # not collide with any occupied position (snake or other apples).
+        # No image loading needed for training
         self.randomize_position(occupied_positions)
 
     @staticmethod
@@ -33,7 +23,7 @@ class Apple:
                 return x, y
 
     @classmethod
-    def spawn_apples(cls, parent_screen, grid_size, snake):
+    def spawn_apples(cls, grid_size, snake):
         """
         Spawn two green apples and one red apple in free cells.
         """
@@ -42,16 +32,12 @@ class Apple:
 
         green_apples = []
         for _ in range(2):
-            apple = cls(parent_screen, grid_size, occupied, "green")
+            apple = cls(grid_size, occupied, "green")
             green_apples.append(apple)
             occupied.add((apple.x, apple.y))
 
-        red_apple = cls(parent_screen, grid_size, occupied, "red")
+        red_apple = cls(grid_size, occupied, "red")
         return green_apples, red_apple
-
-    def draw(self):
-        """Draw the apples on the screen."""
-        self.parent_screen.blit(self.image, (self.x, self.y))
 
     def randomize_position(self, occupied_positions):
         """Randomize apples position avoiding all occupied positions."""
