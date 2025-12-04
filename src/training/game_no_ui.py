@@ -5,7 +5,7 @@ from apple_no_ui import AppleTraining
 BLOCK_SIZE = 40
 
 
-class Game:
+class GameTraining:
     def __init__(self, grid_size):
         """Initialise the game for training (no UI)."""
         self.playable_grid_size = grid_size
@@ -39,7 +39,8 @@ class Game:
                 self.snake.increase()
                 # Build occupied positions: snake + all other apples.
                 occupied = {
-                    (self.snake.x[i], self.snake.y[i]) for i in range(self.snake.length)
+                    (self.snake.x[i], self.snake.y[i])
+                    for i in range(self.snake.length)
                 }
                 for other in self.green_apples:
                     if other is not apple:
@@ -55,7 +56,8 @@ class Game:
                 return
 
             occupied = {
-                (self.snake.x[i], self.snake.y[i]) for i in range(self.snake.length)
+                (self.snake.x[i], self.snake.y[i])
+                for i in range(self.snake.length)
             }
             for apple in self.green_apples:
                 occupied.add((apple.x, apple.y))
@@ -85,7 +87,7 @@ class Game:
             if (self.snake.x[i], self.snake.y[i]) == head_pos:
                 self.game_over = True
                 break
-    
+
     def reset(self):
         """Reset the game to the initial state."""
         self.game_over = False
@@ -105,3 +107,8 @@ class Game:
             self.snake.move_up()
         elif direction == "DOWN":
             self.snake.move_down()
+
+    def run(self):
+        """Run the game."""
+        while not self.game_over:
+            self.play()
