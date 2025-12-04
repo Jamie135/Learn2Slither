@@ -22,7 +22,11 @@ def parse_arguments():
         nargs="?",
         default=10,
     )
-    parser.add_argument("-player", action="store_true", help="Run the game without AI.")
+    parser.add_argument(
+        "-player",
+        action="store_true",
+        help="Run the game without AI.",
+    )
     return parser.parse_args()
 
 

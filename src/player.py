@@ -129,7 +129,8 @@ class Player:
                 self.snake.increase()
                 # Build occupied positions: snake + all other apples.
                 occupied = {
-                    (self.snake.x[i], self.snake.y[i]) for i in range(self.snake.length)
+                    (self.snake.x[i], self.snake.y[i])
+                    for i in range(self.snake.length)
                 }
                 for other in self.green_apples:
                     if other is not apple:
@@ -145,7 +146,8 @@ class Player:
                 return
 
             occupied = {
-                (self.snake.x[i], self.snake.y[i]) for i in range(self.snake.length)
+                (self.snake.x[i], self.snake.y[i])
+                for i in range(self.snake.length)
             }
             for apple in self.green_apples:
                 occupied.add((apple.x, apple.y))
@@ -175,7 +177,7 @@ class Player:
             if (self.snake.x[i], self.snake.y[i]) == head_pos:
                 self.game_over = True
                 break
-    
+
     def reset(self):
         """Reset the game to the initial state."""
         self.game_over = False
@@ -245,4 +247,3 @@ class Player:
                 self.game_over_text()
             # Update the display
             pygame.display.update()
-

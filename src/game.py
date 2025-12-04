@@ -125,7 +125,8 @@ class Game:
                 self.snake.increase()
                 # Build occupied positions: snake + all other apples.
                 occupied = {
-                    (self.snake.x[i], self.snake.y[i]) for i in range(self.snake.length)
+                    (self.snake.x[i], self.snake.y[i])
+                    for i in range(self.snake.length)
                 }
                 for other in self.green_apples:
                     if other is not apple:
@@ -141,7 +142,8 @@ class Game:
                 return
 
             occupied = {
-                (self.snake.x[i], self.snake.y[i]) for i in range(self.snake.length)
+                (self.snake.x[i], self.snake.y[i])
+                for i in range(self.snake.length)
             }
             for apple in self.green_apples:
                 occupied.add((apple.x, apple.y))
@@ -171,7 +173,7 @@ class Game:
             if (self.snake.x[i], self.snake.y[i]) == head_pos:
                 self.game_over = True
                 break
-    
+
     def reset(self):
         """Reset the game to the initial state."""
         self.game_over = False
@@ -186,7 +188,6 @@ class Game:
     def next_direction(self, action):
         """Set the snake's direction based on the action input."""
         pass
-        
 
     def run(self):
         """Run the game."""
