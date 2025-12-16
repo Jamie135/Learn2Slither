@@ -26,7 +26,8 @@ class ANN(nn.Module):
 class ReplayMemory:
     def __init__(self, capacity):
         """Initialise the replay memory."""
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
         self.capacity = capacity
         self.memory = []
 
@@ -48,28 +49,34 @@ class ReplayMemory:
         # 1 example is (state, action, reward, next_state, done)
         experiences = random.sample(self.memory, batch_size)
         states = (
-            torch.from_numpy(np.vstack([e[0] for e in experiences if e is not None]))
+            torch.from_numpy(
+                np.vstack([e[0] for e in experiences if e is not None]))
             .float()
             .to(self.device)
         )
         actions = (
-            torch.from_numpy(np.vstack([e[1] for e in experiences if e is not None]))
+            torch.from_numpy(
+                np.vstack([e[1] for e in experiences if e is not None]))
             .float()
             .to(self.device)
         )
         rewards = (
-            torch.from_numpy(np.vstack([e[2] for e in experiences if e is not None]))
+            torch.from_numpy(
+                np.vstack([e[2] for e in experiences if e is not None]))
             .float()
             .to(self.device)
         )
         next_states = (
-            torch.from_numpy(np.vstack([e[3] for e in experiences if e is not None]))
+            torch.from_numpy(
+                np.vstack([e[3] for e in experiences if e is not None]))
             .float()
             .to(self.device)
         )
         dones = (
             torch.from_numpy(
-                np.vstack([e[4] for e in experiences if e is not None]).astype(np.uint8)
+                np.vstack(
+                    [e[4] for e in experiences if e is not None]
+                ).astype(np.uint8)
             )
             .float()
             .to(self.device)
@@ -95,10 +102,45 @@ scores_of_episodes = deque(maxlen=100)
 
 class Agent:
     def __init__(self, input_size, output_size):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(
+            "cuda" if torch.cuda.is_available() else "cpu")
         self.input_size = input_size
         self.output_size = output_size
-        self.model = ANN(input_size, output_size)
-        self.target_model = ANN(input_size, output_size)
+        self.model = ANN(input_size, output_size).to(self.device)
+        self.target_model = ANN(input_size, output_size).to(self.device)
         self.target_model.load_state_dict(self.model.state_dict())
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
+        self.optimizer = torch.optim.Adam(
+            self.model.parameters(), lr=learning_rate)
+        self.memory = ReplayMemory(replay_memory_capacity)
+        self.t_steps = 0
+        self.recorded_scores = -1
+        self.epsilon = -1
+
+    def get_state(self, game):
+        """Get the state of the game."""
+        head_x, head_y = game.snake.x[0], game.snake.y[0]
+
+        point_left = [(head_x - game.grid_size), head_y]
+        point_right = [(head_x + game.grid_size), head_y]
+        point_up = [head_x, (head_y - game.grid_size)]
+        point_down = [head_x, (head_y + game.grid_size)]
+
+        state = [
+            # is_danger will be implemented later,
+            game.is_danger(point_left),
+            game.is_danger(point_right),
+            game.is_danger(point_up),
+            game.is_danger(point_down),
+            # move direction
+            game.snake.direction == "LEFT",
+            game.snake.direction == "RIGHT",
+            game.snake.direction == "UP",
+            game.snake.direction == "DOWN",
+            # apple position compare to head position
+            game.apple.x < head_x,
+            game.apple.x > head_x,
+            game.apple.y < head_y,
+            game.apple.y > head_y,
+        ]
+
+        return np.array(state, dtype=int)
