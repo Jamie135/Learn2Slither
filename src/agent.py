@@ -151,3 +151,15 @@ class Agent:
         ]
 
         return np.array(state, dtype=int)
+
+    def step(self, state, action, reward, next_state, done):
+        """Take a step in the environment."""
+        self.memory.push((state, action, reward, next_state, done))
+        self.t_steps = (self.t_steps + 1) % 4
+        if self.t_steps == 0:
+            experiences = self.memory.sample(minibatch_size)
+            self.learn(experiences)  # will be implemented later
+
+    def get_action(self, state):
+        """Get the action for the given state."""
+        state = torch.from_numpy(state).float().unsqueeze(0).to(self.device)
