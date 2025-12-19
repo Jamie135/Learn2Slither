@@ -56,6 +56,14 @@ class Game:
         self.surface.blit(shadow_surface, shadow_rect)
         self.surface.blit(text_surface, rect)
 
+    def is_danger(self, point):
+        """Check if the next position is dangerous."""
+        point_x = point[0]
+        point_y = point[1]
+        for i in range(1, self.snake.length):
+            if self.snake.x[i] == point_x and self.snake.y[i] == point_y:
+                return True
+
     def game_start_text(self):
         """Display a start message before the game begins."""
         font = pygame.font.SysFont(None, 48)
@@ -190,7 +198,7 @@ class Game:
         pass
 
     def run(self):
-        """Run the game."""
+        """Run the snake."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()

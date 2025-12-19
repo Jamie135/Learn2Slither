@@ -3,70 +3,8 @@ import json
 import torch
 import random
 import numpy as np
-from collections import deque
 import torch.nn.functional as F
 from torch import nn
-
-
-# Hyperparameters explainations
-
-# number of episodes to train for
-episodes = 10000
-
-# max number of steps per episode
-max_steps = 200000
-
-# initial/final epsilon for exploration-exploitation trade-off
-# exploration = agent is randomly choosing actions
-# exploitation = agent is choosing the action with the highest Q-value
-epsilon_start = 1.0
-epsilon_end = 0.001
-
-# decay rate for epsilon
-epsilon_decay = 0.9995
-
-# rate at which the agent updates its weights
-learning_rate = 0.001
-
-# number of samples used in each training step
-minibatch_size = 100
-
-# discount factor for future rewards
-gamma = 0.95
-
-# maximum capacity of the replay memory
-replay_memory_capacity = int(1e5)
-
-# steps to interpolate target and online network
-# factor by which the target network is updated
-# 1 = target network is updated with the local network
-# 0.001 = target network is updated with 0.1% of the local network
-interpolation_steps = 1e-2
-
-# number of input features (bool of length 16)
-# 16 features:
-# - is_danger(point_left)
-# - is_danger(point_right)
-# - is_danger(point_up)
-# - is_danger(point_down)
-# - move direction (LEFT, RIGHT, UP, DOWN)
-# - closest green apple position relative to head
-#   - x < head_x
-#   - x > head_x
-#   - y < head_y
-#   - y > head_y
-# - red apple position relative to head
-#   - x < head_x
-#   - x > head_x
-#   - y < head_y
-#   - y > head_y
-input_size = 16
-
-# number of possible actions
-output_size = 4
-
-# scores of the last 100 episodes
-scores_of_episodes = deque(maxlen=100)
 
 
 class ANN(nn.Module):
@@ -143,7 +81,13 @@ class ReplayMemory:
 
 
 class Agent:
-    def __init__(self, input_size, output_size):
+    def __init__(
+        self,
+        input_size,
+        output_size,
+        learning_rate,
+        replay_memory_capacity
+    ):
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
             )
@@ -171,7 +115,13 @@ class Agent:
         self.epsilon = -1
 
     def get_state(self, game):
-        """Get the state of the game."""
+        """
+        Get the state of the game describing:
+        - the snake position
+        - its potential moves
+        - its potential danger
+        - its potential reward
+        """
         head_x, head_y = game.snake.x[0], game.snake.y[0]
 
         point_left = [(head_x - game.grid_size), head_y]
@@ -210,25 +160,20 @@ class Agent:
 
         return np.array(state, dtype=int)
 
-    def step(self, state, action, reward, next_state, done):
-        """Take a step in the environment."""
-        self.memory.push((state, action, reward, next_state, done))
-        self.t_steps = (self.t_steps + 1) % 4
-        if self.t_steps == 0:
-            experiences = self.memory.sample(minibatch_size)
-            self.learn(experiences)  # will be implemented later
-
     def get_action(self, state, epsilon):
-        """Get the action for the given state."""
+        """
+        Get the action for the given state.
+        Returning possible choices for the action:
+        """
         # .unsqueeze(0) — adds a batch dimension,
         # changing shape from [16] to [1, 16]
-        state = torch.from_numpy(state).float().unsqueeze(0).to(self.device)
+        states = torch.from_numpy(state).float().unsqueeze(0).to(self.device)
         self.local_network.eval()
         # disable gradient calculation to speed up inference
         with torch.no_grad():
             # since action size is 4 we will get:
             # [Q(state, action_0), ..., Q(state, action_3)]
-            actions = self.local_network(state)
+            actions = self.local_network(states)
         # put the local_network back in training mode
         self.local_network.train()
         # epsilon-greedy policy:
@@ -242,7 +187,28 @@ class Agent:
             action = random.randint(0, 3)
         return action
 
-    def learn(self, experiences):
+    def step(
+        self,
+        state,
+        action,
+        reward,
+        next_state,
+        done,
+        minibatch_size,
+        gamma,
+        interpolation_steps
+    ):
+        """
+        Take a step in the environment.
+        Meaning that the snake is making decisions.
+        """
+        self.memory.push((state, action, reward, next_state, done))
+        self.t_steps = (self.t_steps + 1) % 4
+        if self.t_steps == 0:
+            experiences = self.memory.sample(minibatch_size)
+            self.learn(experiences, gamma, interpolation_steps)
+
+    def learn(self, experiences, gamma, interpolation_steps):
         """Learn from the experiences."""
         states, actions, rewards, next_states, dones = experiences
         next_actions = (
@@ -259,10 +225,14 @@ class Agent:
         loss.backward()
         self.optimizer.step()
         # update the target network
-        self.soft_update(self.local_network, self.traget_network)
+        self.soft_update(
+            self.local_network,
+            self.traget_network,
+            interpolation_steps
+        )
 
-    def soft_update(self, local_network, target_network):
-        """Soft update the target network."""
+    def soft_update(self, local_network, target_network, interpolation_steps):
+        """Ipdate the target network based on interpolation value"""
         # let's say lp = [w1, ..., w3] and tp = [v1, ..., v3]
         # zip will return [(w1, v1), ..., (w3, v3)]
         for local_param, target_param in zip(
