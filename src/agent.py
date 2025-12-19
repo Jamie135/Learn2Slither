@@ -26,6 +26,7 @@ class ANN(nn.Module):
 class ReplayMemory:
     def __init__(self, capacity):
         """Initialise the replay memory."""
+        # determine the device to use for the memory (GPU or CPU)
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
             )
@@ -101,11 +102,21 @@ class Agent:
             )
         self.input_size = input_size
         self.output_size = output_size
-        self.model = ANN(input_size, output_size).to(self.device)
-        self.target_model = ANN(input_size, output_size).to(self.device)
-        self.target_model.load_state_dict(self.model.state_dict())
+        # local network for Q-values prediction of current state
+        self.local_network = ANN(input_size, output_size).to(self.device)
+        # target network for stable Q-values computation
+        self.traget_network = ANN(input_size, output_size).to(self.device)
+        # copy the weights from the local network to the target network
+        self.traget_network.load_state_dict(self.local_network.state_dict())
+        # Adam optimizer for local network, a gradient descent that:
+        # - uses an adaptive learning rate for each parameter
+        # - uses a momentum term to accelerate the convergence
+        # - uses a decay rate for the learning rate
+        # - uses a decay rate for the momentum term
+        # - uses a decay rate for the decay rate
+        # - uses a decay rate for the decay rate
         self.optimizer = torch.optim.Adam(
-            self.model.parameters(), lr=learning_rate
+            self.local_network.parameters(), lr=learning_rate
             )
         self.memory = ReplayMemory(replay_memory_capacity)
         self.t_steps = 0
@@ -160,6 +171,48 @@ class Agent:
             experiences = self.memory.sample(minibatch_size)
             self.learn(experiences)  # will be implemented later
 
-    def get_action(self, state):
+    def get_action(self, state, epsilon):
         """Get the action for the given state."""
+        # .unsqueeze(0) — adds a batch dimension,
+        # changing shape from [16] to [1, 16]
         state = torch.from_numpy(state).float().unsqueeze(0).to(self.device)
+        self.local_network.eval()
+        # disable gradient calculation to speed up inference
+        with torch.no_grad():
+            # since action size is 4 we will get:
+            # [Q(state, action_0), ..., Q(state, action_3)]
+            actions = self.local_network(state)
+        # put the local_network back in training mode
+        self.local_network.train()
+        # epsilon-greedy policy:
+        # with probability epsilon, explore randomly
+        # with probability 1-epsilon, exploit the best action
+        if random.random() > epsilon:
+            # get the action with the highest Q-value
+            action = torch.argmax(actions).item()
+        else:
+            # explore randomly
+            action = random.randint(0, 3)
+        return action
+
+    def learn(self, experiences):
+        """Learn from the experiences."""
+        states, actions, rewards, next_states, dones = experiences
+        next_actions = (
+            self.traget_network(next_states).detach().max(1)[0].unsqueeze(1)
+        )
+        # compute the Q-targets using the Bellman equation:
+        q_targets = rewards + gamma * next_actions * (1 - dones)
+        # compute the Q-values for the current state
+        q_values = self.local_network(states).gather(1, actions)
+        # compute the loss
+        loss = F.mse_loss(q_values, q_targets)
+        # optimize the local network
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        # update the target network
+        self.soft_update(self.local_network, self.traget_network)
+
+    def soft_update(self, local_network, target_network):
+        """Soft update the target network."""
