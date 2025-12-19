@@ -1,9 +1,72 @@
+import os
+import json
 import torch
 import random
 import numpy as np
 from collections import deque
 import torch.nn.functional as F
 from torch import nn
+
+
+# Hyperparameters explainations
+
+# number of episodes to train for
+episodes = 10000
+
+# max number of steps per episode
+max_steps = 200000
+
+# initial/final epsilon for exploration-exploitation trade-off
+# exploration = agent is randomly choosing actions
+# exploitation = agent is choosing the action with the highest Q-value
+epsilon_start = 1.0
+epsilon_end = 0.001
+
+# decay rate for epsilon
+epsilon_decay = 0.9995
+
+# rate at which the agent updates its weights
+learning_rate = 0.001
+
+# number of samples used in each training step
+minibatch_size = 100
+
+# discount factor for future rewards
+gamma = 0.95
+
+# maximum capacity of the replay memory
+replay_memory_capacity = int(1e5)
+
+# steps to interpolate target and online network
+# factor by which the target network is updated
+# 1 = target network is updated with the local network
+# 0.001 = target network is updated with 0.1% of the local network
+interpolation_steps = 1e-2
+
+# number of input features (bool of length 16)
+# 16 features:
+# - is_danger(point_left)
+# - is_danger(point_right)
+# - is_danger(point_up)
+# - is_danger(point_down)
+# - move direction (LEFT, RIGHT, UP, DOWN)
+# - closest green apple position relative to head
+#   - x < head_x
+#   - x > head_x
+#   - y < head_y
+#   - y > head_y
+# - red apple position relative to head
+#   - x < head_x
+#   - x > head_x
+#   - y < head_y
+#   - y > head_y
+input_size = 16
+
+# number of possible actions
+output_size = 4
+
+# scores of the last 100 episodes
+scores_of_episodes = deque(maxlen=100)
 
 
 class ANN(nn.Module):
@@ -77,22 +140,6 @@ class ReplayMemory:
             ).float().to(self.device)
         )
         return states, actions, rewards, next_states, dones
-
-
-# Hyperparameters
-episodes = 10000  # number of episodes to train for
-max_steps = 200000  # max number of steps per episode
-epsilon_start = 1.0  # initial epsilon for exploration-exploitation trade-off
-epsilon_end = 0.001  # final epsilon for exploration-exploitation trade-off
-epsilon_decay = 0.9995  # decay rate for epsilon
-learning_rate = 0.001  # rate at which the agent updates its weights
-minibatch_size = 100  # number of samples used in each training step
-gamma = 0.95  # discount factor for future rewards
-replay_memory_capacity = int(1e5)  # maximum capacity of the replay memory
-interpolation_steps = 1e-2  # steps to interpolate target and online network
-input_size = 16  # number of input features
-output_size = 4  # number of possible actions
-scores_of_episodes = deque(maxlen=100)
 
 
 class Agent:
@@ -216,3 +263,63 @@ class Agent:
 
     def soft_update(self, local_network, target_network):
         """Soft update the target network."""
+        # let's say lp = [w1, ..., w3] and tp = [v1, ..., v3]
+        # zip will return [(w1, v1), ..., (w3, v3)]
+        for local_param, target_param in zip(
+            local_network.parameters(), target_network.parameters()
+        ):
+            target_param.data.copy_(
+                target_param.data * (1 - interpolation_steps) +
+                local_param.data * interpolation_steps
+            )
+
+    def load_model(self, file_name='model.pth'):
+        """Load the model."""
+        file_path = os.path.join('./models/', file_name)
+        if os.path.exists(file_path):
+            self.local_network.load_state_dict(torch.load(file_path))
+            self.load_data()
+            print(f"Model loaded from {file_path}")
+        else:
+            print(f"Model not found at {file_path}")
+
+    def load_data(self):
+        """Retrieve the data."""
+        file_name = 'data.json'
+        model_path = os.path.join('./models/', file_name)
+        if os.path.exists(model_path):
+            with open(model_path, 'r') as file:
+                data = json.load(file)
+                if data is not None:
+                    self.recorded_scores = data['recorded_scores']
+                    self.epsilon = data['epsilon']
+                    print(f"Recorded scores: {self.recorded_scores}")
+                    print(f"Epsilon: {self.epsilon}")
+                else:
+                    print(f"Data is None at {model_path}")
+        else:
+            print(f"Data not found at {model_path}")
+        return self.recorded_scores, self.epsilon
+
+    def save_model(self, file_name='model.pth'):
+        """Save the model."""
+        if not os.path.exists('./models/'):
+            os.makedirs('./models/')
+        file_path = os.path.join('./models/', file_name)
+        torch.save(self.local_network.state_dict(), file_path)
+        print(f"Model saved to {file_path}")
+        self.save_data()
+
+    def save_data(self, recorded_scores, epsilon):
+        """Save the data."""
+        file_name = 'data.json'
+        if not os.path.exists('./models/'):
+            os.makedirs('./models/')
+        path = os.path.join('./models/', file_name)
+        data = {
+            'recorded_scores': recorded_scores,
+            'epsilon': epsilon
+        }
+        with open(path, 'w') as file:
+            json.dump(data, file, indent=4)
+        print(f"Data saved to {path}")
