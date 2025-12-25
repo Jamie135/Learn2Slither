@@ -1,4 +1,5 @@
 import pygame
+import numpy as np
 from snake import Snake
 from apple import Apple
 from pygame import (
@@ -38,6 +39,7 @@ class Game:
             self.snake,
         )
         self.snake.draw()
+        self.reward = 0
 
     def draw_snake_length(self):
         """Display the current snake length on the screen."""
@@ -63,6 +65,10 @@ class Game:
         for i in range(1, self.snake.length):
             if self.snake.x[i] == point_x and self.snake.y[i] == point_y:
                 return True
+        if (point_x <= 0 or point_x >= (self.grid_size - 1) * BLOCK_SIZE
+        or point_y <= 0 or point_y >= (self.grid_size - 1) * BLOCK_SIZE):
+            return True
+        return False
 
     def game_start_text(self):
         """Display a start message before the game begins."""
@@ -111,6 +117,7 @@ class Game:
     def play(self):
         """Move the snake and draw the apple."""
         self.snake.move()
+        self.reward = -0.1
         self.eats_apple()
         # If eating a red apple reduced the length to 0, the game is over;
         # avoid accessing self.snake.x[0] which would raise IndexError.
@@ -141,6 +148,7 @@ class Game:
                         occupied.add((other.x, other.y))
                 occupied.add((self.red_apple.x, self.red_apple.y))
                 apple.randomize_position(occupied)
+                self.reward = 10
 
         # Red apple: decrease length and respawn, or end game if length is 0.
         if (self.red_apple.x, self.red_apple.y) == head_pos:
@@ -156,6 +164,7 @@ class Game:
             for apple in self.green_apples:
                 occupied.add((apple.x, apple.y))
             self.red_apple.randomize_position(occupied)
+            self.reward = -10
 
     def check_wall_collision(self):
         """Set game_over when the snake's head hits a wall."""
@@ -171,6 +180,7 @@ class Game:
             or head_row == self.grid_size - 1
         ):
             self.game_over = True
+            self.reward = -100
 
     def check_self_collision(self):
         """Set game_over when the snake's head collides with its own body."""
@@ -180,6 +190,7 @@ class Game:
         for i in range(1, self.snake.length):
             if (self.snake.x[i], self.snake.y[i]) == head_pos:
                 self.game_over = True
+                self.reward = -100
                 break
 
     def reset(self):
@@ -195,10 +206,30 @@ class Game:
 
     def next_direction(self, action):
         """Set the snake's direction based on the action input."""
-        pass
+        if np.array_equal(action, [1, 0, 0, 0]):
+            new_dir = "right"
+        elif np.array_equal(action, [0, 1, 0, 0]):
+            new_dir = "down"
+        elif np.array_equal(action, [0, 0, 1, 0]):
+            new_dir = "left"
+        elif np.array_equal(action, [0, 0, 0, 1]):
+            new_dir = "up"
+        return new_dir
+    
 
-    def run(self):
+    def run(self, action):
         """Run the snake."""
+    
+        direction = self.next_direction(action)
+        if direction == "right":
+            self.snake.move_right()
+        elif direction == "left":
+            self.snake.move_left()
+        elif direction == "up":
+            self.snake.move_up()
+        elif direction == "down":
+            self.snake.move_down()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -207,6 +238,8 @@ class Game:
                 if not self.game_over:
                     self.play()
                     pygame.display.update()
+                    pygame.time.Clock().tick(200)
+                    break
             elif event.type == KEYDOWN:
                 if event.key == K_ESCAPE and self.game_over:
                     # After losing, Esc closes the game.
@@ -234,3 +267,4 @@ class Game:
                             self.SCREEN_UPDATE,
                             self.timer,
                         )
+        return self.reward, self.game_over, self.snake.length - 3

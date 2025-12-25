@@ -18,10 +18,12 @@ class GameTraining:
             self.grid_size,
             self.snake,
         )
+        self.reward = 0
 
     def play(self):
         """Move the snake and handle game logic."""
         self.snake.move()
+        self.reward = -0.1
         self.eats_apple()
         # If eating a red apple reduced the length to 0, the game is over
         if self.game_over or self.snake.length == 0:
@@ -47,6 +49,7 @@ class GameTraining:
                         occupied.add((other.x, other.y))
                 occupied.add((self.red_apple.x, self.red_apple.y))
                 apple.randomize_position(occupied)
+                self.reward = 10
 
         # Red apple: decrease length and respawn, or end game if length is 0.
         if (self.red_apple.x, self.red_apple.y) == head_pos:
@@ -62,6 +65,7 @@ class GameTraining:
             for apple in self.green_apples:
                 occupied.add((apple.x, apple.y))
             self.red_apple.randomize_position(occupied)
+            self.reward = -10
 
     def check_wall_collision(self):
         """Set game_over when the snake's head hits a wall."""
@@ -77,6 +81,7 @@ class GameTraining:
             or head_row == self.grid_size - 1
         ):
             self.game_over = True
+            self.reward = -100
 
     def check_self_collision(self):
         """Set game_over when the snake's head collides with its own body."""
@@ -86,6 +91,7 @@ class GameTraining:
         for i in range(1, self.snake.length):
             if (self.snake.x[i], self.snake.y[i]) == head_pos:
                 self.game_over = True
+                self.reward = -100
                 break
 
     def reset(self):
@@ -96,6 +102,18 @@ class GameTraining:
             self.grid_size,
             self.snake,
         )
+    
+    def next_direction(self, action):
+        """Set the snake's direction based on the action input."""
+        if np.array_equal(action, [1, 0, 0, 0]):
+            new_dir = "right"
+        elif np.array_equal(action, [0, 1, 0, 0]):
+            new_dir = "down"
+        elif np.array_equal(action, [0, 0, 1, 0]):
+            new_dir = "left"
+        elif np.array_equal(action, [0, 0, 0, 1]):
+            new_dir = "up"
+        return new_dir
 
     def set_direction(self, direction):
         """Set the snake's direction based on input (for training control)."""
@@ -108,7 +126,20 @@ class GameTraining:
         elif direction == "DOWN":
             self.snake.move_down()
 
-    def run(self):
+    def run(self, action):
         """Run the game."""
+
+        direction = self.next_direction(action)
+        if direction == "left":
+            self.snake.move_left()
+        elif direction == "right":
+            self.snake.move_right()
+        elif direction == "up":
+            self.snake.move_up()
+        elif direction == "down":
+            self.snake.move_down()
+
         while not self.game_over:
             self.play()
+
+        return self.reward, self.game_over, self.snake.length - 3

@@ -86,7 +86,8 @@ class Agent:
         input_size,
         output_size,
         learning_rate,
-        replay_memory_capacity
+        replay_memory_capacity,
+        interpolation_steps
     ):
         self.device = torch.device(
             "cuda" if torch.cuda.is_available() else "cpu"
@@ -110,6 +111,7 @@ class Agent:
             self.local_network.parameters(), lr=learning_rate
             )
         self.memory = ReplayMemory(replay_memory_capacity)
+        self.interpolation_steps = interpolation_steps
         self.t_steps = 0
         self.recorded_scores = -1
         self.epsilon = -1
@@ -205,8 +207,9 @@ class Agent:
         self.memory.push((state, action, reward, next_state, done))
         self.t_steps = (self.t_steps + 1) % 4
         if self.t_steps == 0:
-            experiences = self.memory.sample(minibatch_size)
-            self.learn(experiences, gamma, interpolation_steps)
+            if len(self.memory.memory) > minibatch_size:
+                experiences = self.memory.sample(minibatch_size)
+                self.learn(experiences, gamma, interpolation_steps)
 
     def learn(self, experiences, gamma, interpolation_steps):
         """Learn from the experiences."""
@@ -217,7 +220,7 @@ class Agent:
         # compute the Q-targets using the Bellman equation:
         q_targets = rewards + gamma * next_actions * (1 - dones)
         # compute the Q-values for the current state
-        q_values = self.local_network(states).gather(1, actions)
+        q_values = self.local_network(states).gather(1, actions.long())
         # compute the loss
         loss = F.mse_loss(q_values, q_targets)
         # optimize the local network
@@ -278,7 +281,7 @@ class Agent:
         file_path = os.path.join('./models/', file_name)
         torch.save(self.local_network.state_dict(), file_path)
         print(f"Model saved to {file_path}")
-        self.save_data()
+        self.save_data(self.recorded_scores, self.epsilon)
 
     def save_data(self, recorded_scores, epsilon):
         """Save the data."""
