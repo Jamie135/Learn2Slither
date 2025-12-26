@@ -65,8 +65,10 @@ class Game:
         for i in range(1, self.snake.length):
             if self.snake.x[i] == point_x and self.snake.y[i] == point_y:
                 return True
-        if (point_x <= 0 or point_x >= (self.grid_size - 1) * BLOCK_SIZE
-        or point_y <= 0 or point_y >= (self.grid_size - 1) * BLOCK_SIZE):
+        if (
+            point_x <= 0 or point_x >= (self.grid_size - 1) * BLOCK_SIZE
+            or point_y <= 0 or point_y >= (self.grid_size - 1) * BLOCK_SIZE
+        ):
             return True
         return False
 
@@ -215,11 +217,10 @@ class Game:
         elif np.array_equal(action, [0, 0, 0, 1]):
             new_dir = "up"
         return new_dir
-    
 
     def run(self, action):
         """Run the snake."""
-    
+
         direction = self.next_direction(action)
         if direction == "right":
             self.snake.move_right()

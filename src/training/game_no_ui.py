@@ -1,3 +1,4 @@
+import numpy as np
 from snake_no_ui import SnakeTraining
 from apple_no_ui import AppleTraining
 
@@ -102,7 +103,7 @@ class GameTraining:
             self.grid_size,
             self.snake,
         )
-    
+
     def next_direction(self, action):
         """Set the snake's direction based on the action input."""
         if np.array_equal(action, [1, 0, 0, 0]):
