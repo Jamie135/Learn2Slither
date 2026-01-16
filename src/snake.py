@@ -104,6 +104,8 @@ class Snake:
         # Ensure the first move will not immediately hit a wall by
         # shifting the whole snake one cell inward if necessary.
         self.avoid_collision()
+        # Flag to prevent multiple direction changes per tick
+        self.direction_changed = False
 
     def avoid_collision(self):
         """Shift the snake inward if its first move would hit a wall."""
@@ -217,20 +219,24 @@ class Snake:
                 self.y.pop()
 
     def move_left(self):
-        if self.direction != "RIGHT":
+        if self.direction != "RIGHT" and not self.direction_changed:
             self.direction = "LEFT"
+            self.direction_changed = True
 
     def move_right(self):
-        if self.direction != "LEFT":
+        if self.direction != "LEFT" and not self.direction_changed:
             self.direction = "RIGHT"
+            self.direction_changed = True
 
     def move_up(self):
-        if self.direction != "DOWN":
+        if self.direction != "DOWN" and not self.direction_changed:
             self.direction = "UP"
+            self.direction_changed = True
 
     def move_down(self):
-        if self.direction != "UP":
+        if self.direction != "UP" and not self.direction_changed:
             self.direction = "DOWN"
+            self.direction_changed = True
 
     def move(self):
         for i in range(self.length - 1, 0, -1):
@@ -244,4 +250,6 @@ class Snake:
             self.y[0] -= BLOCK_SIZE
         if self.direction == "DOWN":
             self.y[0] += BLOCK_SIZE
+        # Reset the flag so a new direction change is allowed next tick
+        self.direction_changed = False
         self.draw()
