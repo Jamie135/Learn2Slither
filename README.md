@@ -7,12 +7,20 @@ This project explores reinforcement learning (RL) through a classic game: Snake.
 
 
 ## Setup
+
+### Install python
+```bash
+sudo apt install -y python3 python3-venv python3-pip
+```
+
+### Install dependencies
 ```bash
 git clone git@github.com:Jamie135/Learn2Slither.git
 cd Learn2Slither
+python3 -m venv .venv
+source .venv/bin/activate
 pip3 install -r requirements.txt
 ```
-
 
 ## Project
 
