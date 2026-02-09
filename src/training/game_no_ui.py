@@ -27,7 +27,10 @@ class GameTraining:
         self.reward = -0.1
         self.eats_apple()
         # If eating a red apple reduced the length to 0, the game is over
-        if self.game_over or self.snake.length == 0:
+        if self.snake.length == 0:
+            self.game_over = True
+            return
+        if self.game_over:
             return
         self.check_wall_collision()
         self.check_self_collision()
@@ -95,6 +98,20 @@ class GameTraining:
                 self.reward = -100
                 break
 
+    def is_danger(self, point):
+        """Check if the next position is dangerous."""
+        point_x = point[0]
+        point_y = point[1]
+        for i in range(1, self.snake.length):
+            if self.snake.x[i] == point_x and self.snake.y[i] == point_y:
+                return True
+        if (
+            point_x <= 0 or point_x >= (self.grid_size - 1) * BLOCK_SIZE
+            or point_y <= 0 or point_y >= (self.grid_size - 1) * BLOCK_SIZE
+        ):
+            return True
+        return False
+
     def reset(self):
         """Reset the game to the initial state."""
         self.game_over = False
@@ -103,6 +120,7 @@ class GameTraining:
             self.grid_size,
             self.snake,
         )
+        self.reward = 0
 
     def next_direction(self, action):
         """Set the snake's direction based on the action input."""
@@ -128,7 +146,7 @@ class GameTraining:
             self.snake.move_down()
 
     def run(self, action):
-        """Run the game."""
+        """Run one step of the game."""
 
         direction = self.next_direction(action)
         if direction == "left":
@@ -140,7 +158,6 @@ class GameTraining:
         elif direction == "down":
             self.snake.move_down()
 
-        while not self.game_over:
-            self.play()
+        self.play()
 
         return self.reward, self.game_over, self.snake.length - 3
