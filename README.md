@@ -30,25 +30,38 @@ pip3 install -r requirements.txt
 
 ### Training Phase
 
-#### Train with UI (slower, visual feedback)
-Watch the snake learn in real-time with Pygame rendering:
-```bash
-cd src
-python train.py [grid_size]
-```
-- Default grid size: 10x10
-- Training visualization enabled
-- Significantly slower due to rendering overhead
+Train the AI agent using reinforcement learning. By default, training runs headless (no graphics) for maximum speed.
 
-#### Train without UI (faster, recommended)
-Train at maximum speed without graphics:
 ```bash
-cd src/training
-python train_no_ui.py [grid_size]
+python train.py [grid_size] [-ep episodes] [-ui]
 ```
-- Default grid size: 10x10
-- No visualization, pure computation
-- **Recommended for faster training**
+
+**Arguments:**
+- `grid_size` — Board size (default: 10, minimum: 4)
+- `-ep` — Number of training episodes (default: 10000)
+- `-ui` — Enable graphical UI to watch training in real-time (slower)
+
+**Examples:**
+
+By default, fast headless training (recommended):
+```bash
+python train.py
+```
+
+Training with visualization (slower, but watch the AI learn):
+```bash
+python train.py -ui
+```
+
+Training with other grid size (e.g. 6x6):
+```bash
+python train.py 6
+```
+
+Training with other number of episodes (e.g. 100):
+```bash
+python train.py -ep 100
+```
 
 Training saves model checkpoints to `src/models/model_*.pth` and progress data to `src/models/data.json`.
 
@@ -56,15 +69,14 @@ Training saves model checkpoints to `src/models/model_*.pth` and progress data t
 
 Display the trained snake playing with Pygame:
 ```bash
-cd src
-python main.py [grid_size]
+python main.py [grid_size] [-model model.pth]
 ```
-- Loads the latest model (`model_9999.pth` by default)
-- Shows the AI playing in real-time
+**Arguments**
+- `grid_size` — Board size (default: 10, minimum: 4)
+- `-model` Loads the model (`model_9999.pth` by default)
 
 #### Load a specific model checkpoint:
 ```bash
-cd src
 python main.py -model model_5000.pth
 ```
 
@@ -78,9 +90,13 @@ python main.py -model model_5000.pth
 
 Test the game yourself with keyboard controls:
 ```bash
-cd src
-python main.py -player [grid_size]
+python main.py [grid_size] [-player]
 ```
+**Arguments**
+- `grid_size` — Board size (default: 10, minimum: 4)
+- `-player` — Enable gameplay mode for user
+
+#### Controls during gameplay:
 - **Arrow keys** — Control snake direction
 - **1** / **2** — Adjust game speed
 - **Enter** — Restart after game over
