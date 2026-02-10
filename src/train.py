@@ -92,10 +92,16 @@ def parse_arguments():
         default=10,
     )
     parser.add_argument(
-        "--episodes",
+        "-ep",
         type=episodes_type,
         default=10000,
         help="Number of training episodes (default: 10000)"
+    )
+    parser.add_argument(
+        "-ui",
+        action="store_true",
+        default=False,
+        help="Train with graphical UI (default: headless for speed)"
     )
     return parser.parse_args()
 
@@ -103,7 +109,7 @@ def parse_arguments():
 def train():
     try:
         args = parse_arguments()
-        game = Game(args.grid_size)
+        game = Game(args.grid_size, no_ui=not args.ui)
         agent = Agent(
             input_size,
             output_size,
@@ -128,7 +134,10 @@ def train():
                 move = [0, 0, 0, 0]
                 move[action] = 1
                 reward, done, score = game.run(move)
-                state_new = agent.get_state(game)
+                if done:
+                    state_new = state_old
+                else:
+                    state_new = agent.get_state(game)
                 agent.step(
                     state_old,
                     action,
@@ -147,12 +156,12 @@ def train():
             epsilon = max(epsilon_end, epsilon * epsilon_decay)
             agent.save_model(f"model_{episode}.pth")
             agent.save_data(max_score, epsilon)
-            if episode % 50 == 0:
+            if episode % 2 == 1:
                 print(
                     f"Episode: {episode}, "
                     f"Max Score: {max_score}, "
                     f"Current Score: {score}, "
-                    f"Avg Score: {np.mean(scores_of_episodes)}"
+                    f"Avg Score: {np.mean(scores_of_episodes):.2f}"
                 )
 
     except SystemExit:

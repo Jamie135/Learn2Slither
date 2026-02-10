@@ -1,5 +1,9 @@
-import pygame
 import random
+
+try:
+    import pygame
+except ImportError:
+    pygame = None
 
 BLOCK_SIZE = 40
 
@@ -12,13 +16,14 @@ class Apple:
         self.parent_screen = parent_screen
         self.grid_size = grid_size
         self.kind = kind
+        self.no_ui = parent_screen is None
 
-        if kind == "green":
-            image_path = "images/applegreen.png"
-        else:
-            image_path = "images/applered.png"
-
-        self.image = pygame.image.load(image_path)
+        if not self.no_ui:
+            if kind == "green":
+                image_path = "images/applegreen.png"
+            else:
+                image_path = "images/applered.png"
+            self.image = pygame.image.load(image_path)
         # Place the apple at a random position inside the play area that does
         # not collide with any occupied position (snake or other apples).
         self.randomize_position(occupied_positions)
@@ -51,6 +56,8 @@ class Apple:
 
     def draw(self):
         """Draw the apples on the screen."""
+        if self.no_ui:
+            return
         self.parent_screen.blit(self.image, (self.x, self.y))
 
     def randomize_position(self, occupied_positions):

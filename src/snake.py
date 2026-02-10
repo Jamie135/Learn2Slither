@@ -1,5 +1,9 @@
-import pygame
 import random
+
+try:
+    import pygame
+except ImportError:
+    pygame = None
 
 BLOCK_SIZE = 40
 
@@ -10,9 +14,11 @@ class Snake:
         self.length = length
         self.parent_screen = parent_screen
         self.grid_size = grid_size
-        # Use the existing snake image file for the head
-        self.head = pygame.image.load("images/snake.png")
-        self.body = pygame.image.load("images/snakebody.jpg")
+        self.no_ui = parent_screen is None
+        if not self.no_ui:
+            # Use the existing snake image file for the head
+            self.head = pygame.image.load("images/snake.png")
+            self.body = pygame.image.load("images/snakebody.jpg")
         self.position_snake()
 
     def position_snake(self):
@@ -104,8 +110,9 @@ class Snake:
         # Ensure the first move will not immediately hit a wall by
         # shifting the whole snake one cell inward if necessary.
         self.avoid_collision()
-        # Flag to prevent multiple direction changes per tick
-        self.direction_changed = False
+        # Flag to prevent multiple direction changes per tick (UI only)
+        if not self.no_ui:
+            self.direction_changed = False
 
     def avoid_collision(self):
         """Shift the snake inward if its first move would hit a wall."""
@@ -134,6 +141,8 @@ class Snake:
 
     def draw(self):
         """Draw the full map and the snake on the screen."""
+        if self.no_ui:
+            return
         # Draw background grid (playable area) and walls, then snake segments
         self.draw_background_grid()
         self.draw_walls()
@@ -219,22 +228,34 @@ class Snake:
                 self.y.pop()
 
     def move_left(self):
-        if self.direction != "RIGHT" and not self.direction_changed:
+        if self.no_ui:
+            if self.direction != "RIGHT":
+                self.direction = "LEFT"
+        elif self.direction != "RIGHT" and not self.direction_changed:
             self.direction = "LEFT"
             self.direction_changed = True
 
     def move_right(self):
-        if self.direction != "LEFT" and not self.direction_changed:
+        if self.no_ui:
+            if self.direction != "LEFT":
+                self.direction = "RIGHT"
+        elif self.direction != "LEFT" and not self.direction_changed:
             self.direction = "RIGHT"
             self.direction_changed = True
 
     def move_up(self):
-        if self.direction != "DOWN" and not self.direction_changed:
+        if self.no_ui:
+            if self.direction != "DOWN":
+                self.direction = "UP"
+        elif self.direction != "DOWN" and not self.direction_changed:
             self.direction = "UP"
             self.direction_changed = True
 
     def move_down(self):
-        if self.direction != "UP" and not self.direction_changed:
+        if self.no_ui:
+            if self.direction != "UP":
+                self.direction = "DOWN"
+        elif self.direction != "UP" and not self.direction_changed:
             self.direction = "DOWN"
             self.direction_changed = True
 
@@ -250,6 +271,7 @@ class Snake:
             self.y[0] -= BLOCK_SIZE
         if self.direction == "DOWN":
             self.y[0] += BLOCK_SIZE
-        # Reset the flag so a new direction change is allowed next tick
-        self.direction_changed = False
-        self.draw()
+        if not self.no_ui:
+            # Reset the flag so a new direction change is allowed next tick
+            self.direction_changed = False
+            self.draw()

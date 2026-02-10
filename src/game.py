@@ -1,36 +1,47 @@
-import pygame
 import numpy as np
 from snake import Snake
 from apple import Apple
-from pygame import (
-    KEYDOWN,
-    K_ESCAPE,
-    K_RETURN,
-    K_1,
-    K_2,
-)
+
+try:
+    import pygame
+    from pygame import (
+        KEYDOWN,
+        K_ESCAPE,
+        K_RETURN,
+        K_1,
+        K_2,
+    )
+except ImportError:
+    pygame = None
 
 
 BLOCK_SIZE = 40
 
 
 class Game:
-    def __init__(self, grid_size):
+    def __init__(self, grid_size, no_ui=False):
         """Initialise the game."""
         self.playable_grid_size = grid_size
         # Total grid, including the surrounding wall layer
         self.grid_size = grid_size + 2
         self.game_over = False
-        screen_size = (
-            self.grid_size * BLOCK_SIZE,
-            self.grid_size * BLOCK_SIZE,
-        )
-        self.timer = 400
-        pygame.init()
-        pygame.display.set_caption("Snake Game")
-        self.SCREEN_UPDATE = pygame.USEREVENT
-        pygame.time.set_timer(self.SCREEN_UPDATE, self.timer)
-        self.surface = pygame.display.set_mode(screen_size)
+        self.no_ui = no_ui
+        self.reward = 0
+
+        if not self.no_ui:
+            screen_size = (
+                self.grid_size * BLOCK_SIZE,
+                self.grid_size * BLOCK_SIZE,
+            )
+            self.timer = 400
+            pygame.init()
+            pygame.display.set_caption("Snake Game")
+            self.SCREEN_UPDATE = pygame.USEREVENT
+            pygame.time.set_timer(self.SCREEN_UPDATE, self.timer)
+            self.surface = pygame.display.set_mode(screen_size)
+        else:
+            self.surface = None
+
         # Snake and apple receive the total grid size (including walls)
         self.snake = Snake(self.surface, self.grid_size)
         self.green_apples, self.red_apple = Apple.spawn_apples(
@@ -38,8 +49,8 @@ class Game:
             self.grid_size,
             self.snake,
         )
-        self.snake.draw()
-        self.reward = 0
+        if not self.no_ui:
+            self.snake.draw()
 
     def draw_snake_length(self):
         """Display the current snake length on the screen."""
@@ -117,18 +128,22 @@ class Game:
         self.surface.blit(text_surface, rect)
 
     def play(self):
-        """Move the snake and draw the apple."""
+        """Move the snake and handle game logic."""
         self.snake.move()
         self.reward = -0.1
         self.eats_apple()
         # If eating a red apple reduced the length to 0, the game is over;
         # avoid accessing self.snake.x[0] which would raise IndexError.
-        if self.game_over or self.snake.length == 0:
+        if self.snake.length == 0:
+            self.game_over = True
             return
-        for apple in self.green_apples:
-            apple.draw()
-        self.red_apple.draw()
-        self.draw_snake_length()
+        if self.game_over:
+            return
+        if not self.no_ui:
+            for apple in self.green_apples:
+                apple.draw()
+            self.red_apple.draw()
+            self.draw_snake_length()
         self.check_wall_collision()
         self.check_self_collision()
 
@@ -198,13 +213,15 @@ class Game:
     def reset(self):
         """Reset the game to the initial state."""
         self.game_over = False
+        self.reward = 0
         self.snake = Snake(self.surface, self.grid_size)
         self.green_apples, self.red_apple = Apple.spawn_apples(
             self.surface,
             self.grid_size,
             self.snake,
         )
-        self.snake.draw()
+        if not self.no_ui:
+            self.snake.draw()
 
     def next_direction(self, action):
         """Set the snake's direction based on the action input."""
@@ -219,7 +236,7 @@ class Game:
         return new_dir
 
     def run(self, action):
-        """Run the snake."""
+        """Run one step of the game."""
 
         direction = self.next_direction(action)
         if direction == "right":
@@ -230,6 +247,10 @@ class Game:
             self.snake.move_up()
         elif direction == "down":
             self.snake.move_down()
+
+        if self.no_ui:
+            self.play()
+            return self.reward, self.game_over, self.snake.length - 3
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

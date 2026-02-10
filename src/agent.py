@@ -280,7 +280,7 @@ class Agent:
             os.makedirs('./models/')
         file_path = os.path.join('./models/', file_name)
         torch.save(self.local_network.state_dict(), file_path)
-        print(f"Model saved to {file_path}")
+        # print(f"Model saved to {file_path}")
         self.save_data(self.recorded_scores, self.epsilon)
 
     def save_data(self, recorded_scores, epsilon):
@@ -295,4 +295,4 @@ class Agent:
         }
         with open(path, 'w') as file:
             json.dump(data, file, indent=4)
-        print(f"Data saved to {path}")
+        # print(f"Data saved to {path}")
