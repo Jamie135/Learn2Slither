@@ -2,13 +2,11 @@ import os
 import argparse
 import numpy as np
 from collections import deque
-from src.agent import Agent
-from src.training.game_no_ui import GameTraining
+from agent import Agent
+from game_no_ui import GameTraining
+
 
 # Hyperparameters explanations
-
-# number of episodes to train for
-episodes = 10000
 
 # max number of steps per episode
 max_steps = 200000
@@ -57,6 +55,15 @@ def parse_arguments():
             )
         return grid
 
+    def episodes_type(value):
+        """Argument parser type for episodes."""
+        episodes = int(value)
+        if episodes < 1:
+            raise argparse.ArgumentTypeError(
+                "episodes must be at least 1."
+            )
+        return episodes
+
     parser = argparse.ArgumentParser(
         description="Snake Game Training - No UI"
     )
@@ -65,6 +72,12 @@ def parse_arguments():
         type=grid_size_type,
         nargs="?",
         default=10,
+    )
+    parser.add_argument(
+        "--episodes",
+        type=episodes_type,
+        default=5000,
+        help="Number of training episodes (default: 5000)"
     )
     return parser.parse_args()
 
@@ -92,7 +105,7 @@ def train():
             epsilon = agent.epsilon
             max_score = max(max_score, agent.recorded_scores)
 
-        for episode in range(0, episodes):
+        for episode in range(0, args.episodes):
             game.reset()
             score = 0
             for t in range(max_steps):

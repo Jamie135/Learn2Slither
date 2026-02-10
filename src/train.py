@@ -5,10 +5,7 @@ from collections import deque
 from game import Game
 
 
-# Hyperparameters explainations
-
-# number of episodes to train for
-episodes = 10000
+# Hyperparameters explanations
 
 # max number of steps per episode
 max_steps = 200000
@@ -78,12 +75,27 @@ def parse_arguments():
             )
         return grid
 
+    def episodes_type(value):
+        """Argument parser type for episodes."""
+        episodes = int(value)
+        if episodes < 1:
+            raise argparse.ArgumentTypeError(
+                "episodes must be at least 1."
+            )
+        return episodes
+
     parser = argparse.ArgumentParser(description="Snake Game - Learn2Slither")
     parser.add_argument(
         "grid_size",
         type=grid_size_type,
         nargs="?",
         default=10,
+    )
+    parser.add_argument(
+        "--episodes",
+        type=episodes_type,
+        default=10000,
+        help="Number of training episodes (default: 10000)"
     )
     return parser.parse_args()
 
@@ -107,7 +119,7 @@ def train():
             epsilon = agent.epsilon
             max_score = max(max_score, agent.recorded_scores)
 
-        for episode in range(0, episodes):
+        for episode in range(0, args.episodes):
             game.reset()
             score = 0
             for t in range(max_steps):
