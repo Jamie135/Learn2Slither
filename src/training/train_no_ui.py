@@ -1,17 +1,11 @@
-import sys
 import os
 import argparse
 import numpy as np
 from collections import deque
+from src.agent import Agent
+from src.training.game_no_ui import GameTraining
 
-# Add parent directory to path so we can import agent.py
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-
-from agent import Agent
-from game_no_ui import GameTraining
-
-
-# Hyperparameters
+# Hyperparameters explanations
 
 # number of episodes to train for
 episodes = 10000
