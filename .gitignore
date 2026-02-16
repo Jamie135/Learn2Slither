@@ -2,5 +2,4 @@ __pycache__/
 .venv/
 .DS_Store
 *.pdf
-src/models/*.json
-src/models/*.pth
+src/models/
