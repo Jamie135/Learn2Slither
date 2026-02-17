@@ -246,53 +246,65 @@ class Agent:
                 local_param.data * interpolation_steps
             )
 
-    def load_model(self, file_name='model.pth'):
-        """Load the model."""
-        file_path = os.path.join('./models/', file_name)
+    def load_model(self, file_path):
+        """Load the model and learning state from a single file."""
         if os.path.exists(file_path):
-            self.local_network.load_state_dict(torch.load(file_path))
-            self.load_data()
-            print(f"Model loaded from {file_path}")
+            checkpoint = torch.load(
+                file_path, map_location=self.device, weights_only=False
+            )
+            if isinstance(checkpoint, dict) \
+                    and 'model_state_dict' in checkpoint:
+                # New bundled format
+                self.local_network.load_state_dict(
+                    checkpoint['model_state_dict']
+                )
+                if 'target_state_dict' in checkpoint:
+                    self.traget_network.load_state_dict(
+                        checkpoint['target_state_dict']
+                    )
+                if 'optimizer_state_dict' in checkpoint:
+                    self.optimizer.load_state_dict(
+                        checkpoint['optimizer_state_dict']
+                    )
+                self.epsilon = checkpoint.get('epsilon', -1)
+                self.recorded_scores = checkpoint.get(
+                    'recorded_scores', -1
+                )
+            else:
+                # Legacy format: just state dict
+                self.local_network.load_state_dict(checkpoint)
+                self.traget_network.load_state_dict(checkpoint)
+                self._load_legacy_data()
+            print(f"Load trained model from {file_path}")
+            if self.recorded_scores != -1:
+                print(f"Recorded scores: {self.recorded_scores}")
+            if self.epsilon != -1:
+                print(f"Epsilon: {self.epsilon}")
         else:
             print(f"Model not found at {file_path}")
 
-    def load_data(self):
-        """Retrieve the data."""
-        file_name = 'data.json'
-        model_path = os.path.join('./models/', file_name)
+    def _load_legacy_data(self):
+        """Load data from legacy data.json file (backward compat)."""
+        model_path = os.path.join('./models/', 'data.json')
         if os.path.exists(model_path):
             with open(model_path, 'r') as file:
                 data = json.load(file)
                 if data is not None:
-                    self.recorded_scores = data['recorded_scores']
-                    self.epsilon = data['epsilon']
-                    print(f"Recorded scores: {self.recorded_scores}")
-                    print(f"Epsilon: {self.epsilon}")
-                else:
-                    print(f"Data is None at {model_path}")
-        else:
-            print(f"Data not found at {model_path}")
-        return self.recorded_scores, self.epsilon
+                    self.recorded_scores = data.get(
+                        'recorded_scores', -1
+                    )
+                    self.epsilon = data.get('epsilon', -1)
 
-    def save_model(self, file_name='model.pth'):
-        """Save the model."""
-        if not os.path.exists('./models/'):
-            os.makedirs('./models/')
-        file_path = os.path.join('./models/', file_name)
-        torch.save(self.local_network.state_dict(), file_path)
-        # print(f"Model saved to {file_path}")
-        self.save_data(self.recorded_scores, self.epsilon)
-
-    def save_data(self, recorded_scores, epsilon):
-        """Save the data."""
-        file_name = 'data.json'
-        if not os.path.exists('./models/'):
-            os.makedirs('./models/')
-        path = os.path.join('./models/', file_name)
-        data = {
-            'recorded_scores': recorded_scores,
-            'epsilon': epsilon
+    def save_model(self, file_path):
+        """Save the model and learning state to a single file."""
+        dir_name = os.path.dirname(file_path)
+        if dir_name and not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+        checkpoint = {
+            'model_state_dict': self.local_network.state_dict(),
+            'target_state_dict': self.traget_network.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'recorded_scores': self.recorded_scores,
+            'epsilon': self.epsilon,
         }
-        with open(path, 'w') as file:
-            json.dump(data, file, indent=4)
-        # print(f"Data saved to {path}")
+        torch.save(checkpoint, file_path)

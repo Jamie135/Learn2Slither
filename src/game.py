@@ -235,9 +235,8 @@ class Game:
             new_dir = "up"
         return new_dir
 
-    def run(self, action):
-        """Run one step of the game."""
-
+    def _apply_direction(self, action):
+        """Apply direction from action array to the snake."""
         direction = self.next_direction(action)
         if direction == "right":
             self.snake.move_right()
@@ -247,6 +246,70 @@ class Game:
             self.snake.move_up()
         elif direction == "down":
             self.snake.move_down()
+
+    def play_step(self, action, step_by_step=False):
+        """
+        Execute one game step immediately (for AI control).
+        Always steps regardless of UI mode. Renders if UI is on.
+        In step-by-step mode, waits for a key press before returning.
+        Returns: (reward, game_over, score)
+        """
+        self._apply_direction(action)
+        self.play()
+
+        if not self.no_ui:
+            # Process events (quit, speed control)
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+                elif event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        pygame.quit()
+                        quit()
+                    elif event.key == K_2:
+                        self.timer -= 50
+                        if self.timer < 50:
+                            self.timer = 50
+                    elif event.key == K_1:
+                        self.timer += 50
+                        if self.timer > 800:
+                            self.timer = 800
+
+            if self.game_over:
+                self.game_over_text()
+            pygame.display.update()
+
+            if step_by_step:
+                self._wait_for_keypress()
+            else:
+                # Control speed using timer value as delay
+                pygame.time.delay(self.timer)
+
+        return self.reward, self.game_over, self.snake.length - 3
+
+    def _wait_for_keypress(self):
+        """Wait for Space, Enter, or arrow key to advance one step."""
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+                elif event.type == KEYDOWN:
+                    if event.key == K_ESCAPE:
+                        pygame.quit()
+                        quit()
+                    elif event.key in (
+                        pygame.K_SPACE, K_RETURN,
+                        pygame.K_RIGHT, pygame.K_LEFT,
+                        pygame.K_UP, pygame.K_DOWN,
+                    ):
+                        return
+
+    def run(self, action):
+        """Run one step of the game (legacy event-driven UI mode)."""
+
+        self._apply_direction(action)
 
         if self.no_ui:
             self.play()

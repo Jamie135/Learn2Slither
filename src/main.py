@@ -1,7 +1,23 @@
+import argparse
+import numpy as np
+from collections import deque
 from game import Game
 from player import Player
 from agent import Agent
-import argparse
+
+
+# Hyperparameters
+max_steps = 200000
+epsilon_start = 1.0
+epsilon_end = 0.001
+epsilon_decay = 0.9995
+learning_rate = 0.001
+minibatch_size = 100
+gamma = 0.95
+replay_memory_capacity = int(1e5)
+interpolation_steps = 1e-2
+input_size = 16
+output_size = 4
 
 
 def parse_arguments():
@@ -16,6 +32,15 @@ def parse_arguments():
             )
         return grid
 
+    def sessions_type(value):
+        """Argument parser type for sessions."""
+        sessions = int(value)
+        if sessions < 1:
+            raise argparse.ArgumentTypeError(
+                "sessions must be at least 1."
+            )
+        return sessions
+
     parser = argparse.ArgumentParser(description="Snake Game - Learn2Slither")
     parser.add_argument(
         "grid_size",
@@ -24,67 +49,171 @@ def parse_arguments():
         default=10,
     )
     parser.add_argument(
-        "-player",
-        action="store_true",
-        help="Run the game without AI.",
+        "-sessions",
+        type=sessions_type,
+        default=1,
+        help="Number of training/evaluation sessions (default: 1)",
     )
     parser.add_argument(
-        "-model",
+        "-save",
         type=str,
-        default="model_9999.pth",
-        help="Model file to load (default: model_9999.pth).",
+        default=None,
+        help="Path to save the trained model (e.g., models/10sess.pth)",
+    )
+    parser.add_argument(
+        "-load",
+        type=str,
+        default=None,
+        help="Path to load a trained model (e.g., models/100sess.pth)",
+    )
+    parser.add_argument(
+        "-visual",
+        type=str,
+        choices=["on", "off"],
+        default="on",
+        help="Enable or disable the graphical UI (default: on)",
+    )
+    parser.add_argument(
+        "-dontlearn",
+        action="store_true",
+        help="Run without learning (evaluation mode)",
+    )
+    parser.add_argument(
+        "-step-by-step",
+        action="store_true",
+        dest="step_by_step",
+        help="Step-by-step mode (press Space/Enter to advance each move)",
+    )
+    parser.add_argument(
+        "-player",
+        action="store_true",
+        help="Run the game in human player mode",
     )
     return parser.parse_args()
+
+
+def run_evaluation(args, game, agent):
+    """Run evaluation sessions (no learning)."""
+    epsilon = 0.0
+    no_ui = args.visual == "off"
+    step_by_step = args.step_by_step
+
+    for session in range(1, args.sessions + 1):
+        game.reset()
+        duration = 0
+        max_length = game.snake.length
+        for t in range(max_steps):
+            state = agent.get_state(game)
+            action = agent.get_action(state, epsilon)
+            move = [0, 0, 0, 0]
+            move[action] = 1
+            reward, done, score = game.play_step(
+                move, step_by_step=step_by_step
+            )
+            duration += 1
+            max_length = max(max_length, game.snake.length)
+            if done:
+                break
+
+        print(
+            f"Game over, max length = {max_length}, "
+            f"max duration = {duration}"
+        )
+
+
+def run_training(args, game, agent):
+    """Run training sessions."""
+    no_ui = args.visual == "off"
+    step_by_step = args.step_by_step
+    scores = deque(maxlen=100)
+
+    epsilon = epsilon_start
+    if agent.epsilon != -1:
+        epsilon = agent.epsilon
+    max_score = max(0, agent.recorded_scores)
+
+    for session in range(1, args.sessions + 1):
+        game.reset()
+        score = 0
+        duration = 0
+        for t in range(max_steps):
+            state_old = agent.get_state(game)
+            action = agent.get_action(state_old, epsilon)
+            move = [0, 0, 0, 0]
+            move[action] = 1
+            reward, done, score = game.play_step(
+                move, step_by_step=step_by_step
+            )
+            duration += 1
+            if done:
+                state_new = state_old
+            else:
+                state_new = agent.get_state(game)
+            agent.step(
+                state_old, action, reward, state_new,
+                done, minibatch_size, gamma, interpolation_steps
+            )
+            if done:
+                break
+
+        max_score = max(max_score, score)
+        scores.append(score)
+        epsilon = max(epsilon_end, epsilon * epsilon_decay)
+        agent.epsilon = epsilon
+        agent.recorded_scores = max_score
+
+        if session % 2 == 0 or session == args.sessions:
+            print(
+                f"Session: {session}/{args.sessions}, "
+                f"Score: {score}, "
+                f"Max Score: {max_score}, "
+                f"Avg Score: {np.mean(scores):.2f}, "
+                f"Duration: {duration}"
+            )
+
+    if args.save:
+        agent.save_model(args.save)
+        print(f"Save learning state in {args.save}")
 
 
 def main():
     try:
         args = parse_arguments()
+
         if args.player:
             game = Player(args.grid_size)
             game.run()
-        else:
-            game = Game(args.grid_size)
-            agent = Agent(
-                input_size=16,
-                output_size=4,
-                learning_rate=0.001,
-                replay_memory_capacity=int(1e5),
-                interpolation_steps=1e-2,
-            )
-            agent.load_model(args.model)
-            # Use the trained model (no exploration)
-            epsilon = 0.0
+            return
 
-            running = True
-            while running:
-                if not game.game_over:
-                    state = agent.get_state(game)
-                    action = agent.get_action(state, epsilon)
-                    move = [0, 0, 0, 0]
-                    move[action] = 1
-                    reward, done, score = game.run(move)
-                    if done:
-                        game.game_over_text()
-                        import pygame
-                        pygame.display.update()
-                else:
-                    # Handle events while game over (restart / quit)
-                    import pygame
-                    from pygame import KEYDOWN, K_ESCAPE, K_RETURN
-                    for event in pygame.event.get():
-                        if event.type == pygame.QUIT:
-                            running = False
-                        elif event.type == KEYDOWN:
-                            if event.key == K_ESCAPE:
-                                running = False
-                            elif event.key == K_RETURN:
-                                game.reset()
+        # AI mode
+        no_ui = args.visual == "off"
+        game = Game(args.grid_size, no_ui=no_ui)
+        agent = Agent(
+            input_size=input_size,
+            output_size=output_size,
+            learning_rate=learning_rate,
+            replay_memory_capacity=replay_memory_capacity,
+            interpolation_steps=interpolation_steps,
+        )
+
+        if args.load:
+            agent.load_model(args.load)
+
+        if args.dontlearn:
+            run_evaluation(args, game, agent)
+        else:
+            run_training(args, game, agent)
 
     except SystemExit:
         return
     except KeyboardInterrupt:
         print("\nExecution interrupted by user.")
+        try:
+            if not args.player and args.save and not args.dontlearn:
+                agent.save_model(args.save)
+                print(f"Save learning state in {args.save}")
+        except Exception:
+            pass
         return
 
 

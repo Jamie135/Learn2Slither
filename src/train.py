@@ -75,14 +75,14 @@ def parse_arguments():
             )
         return grid
 
-    def episodes_type(value):
-        """Argument parser type for episodes."""
-        episodes = int(value)
-        if episodes < 1:
+    def sessions_type(value):
+        """Argument parser type for sessions."""
+        sessions = int(value)
+        if sessions < 1:
             raise argparse.ArgumentTypeError(
-                "episodes must be at least 1."
+                "sessions must be at least 1."
             )
-        return episodes
+        return sessions
 
     parser = argparse.ArgumentParser(description="Snake Game - Learn2Slither")
     parser.add_argument(
@@ -92,16 +92,29 @@ def parse_arguments():
         default=10,
     )
     parser.add_argument(
-        "-ep",
-        type=episodes_type,
+        "-sessions",
+        type=sessions_type,
         default=10000,
-        help="Number of training episodes (default: 10000)"
+        help="Number of training sessions (default: 10000)"
     )
     parser.add_argument(
-        "-ui",
-        action="store_true",
-        default=False,
-        help="Train with graphical UI (default: headless for speed)"
+        "-save",
+        type=str,
+        default=None,
+        help="Path to save the trained model (e.g., models/10sess.pth)"
+    )
+    parser.add_argument(
+        "-load",
+        type=str,
+        default=None,
+        help="Path to load a previously trained model"
+    )
+    parser.add_argument(
+        "-visual",
+        type=str,
+        choices=["on", "off"],
+        default="off",
+        help="Train with graphical UI (default: off for speed)"
     )
     return parser.parse_args()
 
@@ -109,7 +122,8 @@ def parse_arguments():
 def train():
     try:
         args = parse_arguments()
-        game = Game(args.grid_size, no_ui=not args.ui)
+        no_ui = args.visual == "off"
+        game = Game(args.grid_size, no_ui=no_ui)
         agent = Agent(
             input_size,
             output_size,
@@ -117,7 +131,8 @@ def train():
             replay_memory_capacity,
             interpolation_steps
         )
-        agent.load_model()
+        if args.load:
+            agent.load_model(args.load)
         max_score = 0
 
         epsilon = epsilon_start
@@ -125,7 +140,7 @@ def train():
             epsilon = agent.epsilon
             max_score = max(max_score, agent.recorded_scores)
 
-        for episode in range(0, args.episodes):
+        for session in range(1, args.sessions + 1):
             game.reset()
             score = 0
             for t in range(max_steps):
@@ -133,7 +148,7 @@ def train():
                 action = agent.get_action(state_old, epsilon)
                 move = [0, 0, 0, 0]
                 move[action] = 1
-                reward, done, score = game.run(move)
+                reward, done, score = game.play_step(move)
                 if done:
                     state_new = state_old
                 else:
@@ -154,20 +169,31 @@ def train():
             max_score = max(max_score, score)
             scores_of_episodes.append(score)
             epsilon = max(epsilon_end, epsilon * epsilon_decay)
-            agent.save_model(f"model_{episode}.pth")
-            agent.save_data(max_score, epsilon)
-            if episode % 2 == 1:
+            agent.epsilon = epsilon
+            agent.recorded_scores = max_score
+
+            if session % 2 == 0 or session == args.sessions:
                 print(
-                    f"Episode: {episode}, "
+                    f"Session: {session}/{args.sessions}, "
                     f"Max Score: {max_score}, "
                     f"Current Score: {score}, "
                     f"Avg Score: {np.mean(scores_of_episodes):.2f}"
                 )
 
+        if args.save:
+            agent.save_model(args.save)
+            print(f"Save learning state in {args.save}")
+
     except SystemExit:
         return
     except KeyboardInterrupt:
         print("\nExecution interrupted by user.")
+        try:
+            if args.save:
+                agent.save_model(args.save)
+                print(f"Save learning state in {args.save}")
+        except Exception:
+            pass
         return
 
 
