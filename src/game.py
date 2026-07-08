@@ -233,6 +233,8 @@ class Game:
             new_dir = "left"
         elif np.array_equal(action, [0, 0, 0, 1]):
             new_dir = "up"
+        else:
+            raise ValueError(f"Invalid action: {action}")
         return new_dir
 
     def _apply_direction(self, action):
@@ -246,6 +248,64 @@ class Game:
             self.snake.move_up()
         elif direction == "down":
             self.snake.move_down()
+        return direction
+
+    def _cell_symbol(self, cell_col, cell_row):
+        """Return the symbol representing a board cell."""
+        if (
+            cell_col <= 0
+            or cell_col >= self.grid_size - 1
+            or cell_row <= 0
+            or cell_row >= self.grid_size - 1
+        ):
+            return "W"
+
+        if self.snake.length > 0:
+            head_col = self.snake.x[0] // BLOCK_SIZE
+            head_row = self.snake.y[0] // BLOCK_SIZE
+            if (cell_col, cell_row) == (head_col, head_row):
+                return "H"
+
+            for i in range(1, self.snake.length):
+                body_col = self.snake.x[i] // BLOCK_SIZE
+                body_row = self.snake.y[i] // BLOCK_SIZE
+                if (cell_col, cell_row) == (body_col, body_row):
+                    return "S"
+
+        for apple in self.green_apples:
+            apple_col = apple.x // BLOCK_SIZE
+            apple_row = apple.y // BLOCK_SIZE
+            if (cell_col, cell_row) == (apple_col, apple_row):
+                return "G"
+
+        red_col = self.red_apple.x // BLOCK_SIZE
+        red_row = self.red_apple.y // BLOCK_SIZE
+        if (cell_col, cell_row) == (red_col, red_row):
+            return "R"
+
+        return "0"
+
+    def _print_step_state(self, direction):
+        """Print the action taken and the local snake vision to the terminal."""
+        print(f"Action taken: {direction}")
+
+        if self.snake.length == 0:
+            print("Snake vision: unavailable (snake has no segments).")
+            print()
+            return
+
+        head_col = self.snake.x[0] // BLOCK_SIZE
+        head_row = self.snake.y[0] // BLOCK_SIZE
+        print("Snake vision:")
+        for row in range(self.grid_size):
+            row_cells = []
+            for col in range(self.grid_size):
+                if col == head_col or row == head_row:
+                    row_cells.append(self._cell_symbol(col, row))
+                else:
+                    row_cells.append(" ")
+            print(" ".join(row_cells))
+        print()
 
     def play_step(self, action, step_by_step=False):
         """
@@ -254,8 +314,11 @@ class Game:
         In step-by-step mode, waits for a key press before returning.
         Returns: (reward, game_over, score)
         """
-        self._apply_direction(action)
+        direction = self._apply_direction(action)
         self.play()
+
+        if not self.no_ui:
+            self._print_step_state(direction)
 
         if not self.no_ui:
             # Process events (quit, speed control)
