@@ -165,7 +165,7 @@ class Game:
                         occupied.add((other.x, other.y))
                 occupied.add((self.red_apple.x, self.red_apple.y))
                 apple.randomize_position(occupied)
-                self.reward = 10
+                self.reward = 20
 
         # Red apple: decrease length and respawn, or end game if length is 0.
         if (self.red_apple.x, self.red_apple.y) == head_pos:
@@ -181,7 +181,7 @@ class Game:
             for apple in self.green_apples:
                 occupied.add((apple.x, apple.y))
             self.red_apple.randomize_position(occupied)
-            self.reward = -10
+            self.reward = -5
 
     def check_wall_collision(self):
         """Set game_over when the snake's head hits a wall."""
@@ -197,7 +197,7 @@ class Game:
             or head_row == self.grid_size - 1
         ):
             self.game_over = True
-            self.reward = -100
+            self.reward = -20
 
     def check_self_collision(self):
         """Set game_over when the snake's head collides with its own body."""
@@ -207,7 +207,7 @@ class Game:
         for i in range(1, self.snake.length):
             if (self.snake.x[i], self.snake.y[i]) == head_pos:
                 self.game_over = True
-                self.reward = -100
+                self.reward = -20
                 break
 
     def reset(self):
