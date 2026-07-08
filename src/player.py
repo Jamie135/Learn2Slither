@@ -46,7 +46,7 @@ class Player:
     def draw_snake_length(self):
         """Display the current snake length on the screen."""
         font = pygame.font.SysFont(None, 30)
-        text = f"Length: {self.snake.length}"
+        text = f"Score: {self.snake.length - 3}"
         color = (255, 255, 255)
         shadow_color = (0, 0, 0)
 
