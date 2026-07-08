@@ -285,9 +285,9 @@ class Game:
 
         return "0"
 
-    def _print_step_state(self, direction):
-        """Print the action taken and the local snake vision to the terminal."""
-        print(f"Action taken: {direction}")
+    def _print_step_state(self, requested_direction, effective_direction):
+        """Print the requested action, effective direction, and local vision."""
+        print(f"Action taken: {effective_direction}")
 
         if self.snake.length == 0:
             print("Snake vision: unavailable (snake has no segments).")
@@ -314,11 +314,14 @@ class Game:
         In step-by-step mode, waits for a key press before returning.
         Returns: (reward, game_over, score)
         """
-        direction = self._apply_direction(action)
+        requested_direction = self._apply_direction(action)
         self.play()
 
         if not self.no_ui:
-            self._print_step_state(direction)
+            self._print_step_state(
+                requested_direction,
+                self.snake.direction.lower(),
+            )
 
         if not self.no_ui:
             # Process events (quit, speed control)
