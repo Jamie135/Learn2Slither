@@ -10,7 +10,7 @@ from agent import Agent
 max_steps = 200000
 epsilon_start = 1.0
 epsilon_end = 0.001
-epsilon_decay = 0.9995
+epsilon_decay = 0.97
 learning_rate = 0.001
 minibatch_size = 100
 gamma = 0.95

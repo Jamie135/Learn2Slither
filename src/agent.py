@@ -5,6 +5,7 @@ import random
 import numpy as np
 import torch.nn.functional as F
 from torch import nn
+from game import BLOCK_SIZE
 
 
 class ANN(nn.Module):
@@ -126,10 +127,10 @@ class Agent:
         """
         head_x, head_y = game.snake.x[0], game.snake.y[0]
 
-        point_left = [(head_x - game.grid_size), head_y]
-        point_right = [(head_x + game.grid_size), head_y]
-        point_up = [head_x, (head_y - game.grid_size)]
-        point_down = [head_x, (head_y + game.grid_size)]
+        point_left = [head_x - BLOCK_SIZE, head_y]
+        point_right = [head_x + BLOCK_SIZE, head_y]
+        point_up = [head_x, head_y - BLOCK_SIZE]
+        point_down = [head_x, head_y + BLOCK_SIZE]
 
         # Find the closest green apple
         closest_green = min(
@@ -161,6 +162,23 @@ class Agent:
         ]
 
         return np.array(state, dtype=int)
+
+    def _valid_actions(self, state):
+        """Return action indices that do not immediately reverse direction."""
+        moving_left = bool(state[4])
+        moving_right = bool(state[5])
+        moving_up = bool(state[6])
+        moving_down = bool(state[7])
+
+        if moving_right:
+            return [0, 1, 3]
+        if moving_left:
+            return [1, 2, 3]
+        if moving_up:
+            return [0, 1, 2]
+        if moving_down:
+            return [0, 2, 3]
+        return [0, 1, 2, 3]
 
     def get_action(self, state, epsilon):
         """

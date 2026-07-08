@@ -17,7 +17,7 @@ epsilon_start = 1.0
 epsilon_end = 0.001
 
 # decay rate for epsilon
-epsilon_decay = 0.9995
+epsilon_decay = 0.97
 
 # rate at which the agent updates its weights
 learning_rate = 0.001
