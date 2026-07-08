@@ -28,12 +28,16 @@ pip3 install -r requirements.txt
 
 ## Usage
 
+```bash
+cd src/
+```
+
 ### Training Phase
 
 Train the AI agent using reinforcement learning. By default, training runs headless (no graphics) for maximum speed.
 
 ```bash
-python src/main.py [grid_size] [-sessions N] [-save PATH] [-load PATH] [-visual {on,off}]
+python main.py [grid_size] [-sessions N] [-save PATH] [-load PATH] [-visual {on,off}]
 ```
 
 **Arguments:**
@@ -47,27 +51,27 @@ python src/main.py [grid_size] [-sessions N] [-save PATH] [-load PATH] [-visual 
 
 Train 10 sessions and save the model:
 ```bash
-python src/main.py -sessions 10 -save models/10sess.pth -visual off
+python main.py -sessions 10 -save models/10sess.pth -visual off
 ```
 
 Train 100 sessions, continuing from a saved model:
 ```bash
-python src/main.py -sessions 100 -load models/10sess.pth -save models/100sess.pth -visual off
+python main.py -sessions 100 -load models/10sess.pth -save models/100sess.pth -visual off
 ```
 
 Train with visualization (slower, but watch the AI learn):
 ```bash
-python src/main.py -sessions 100 -save models/100sess.pth -visual on
+python main.py -sessions 100 -save models/100sess.pth -visual on
 ```
 
 Train on a different grid size (e.g., 6×6):
 ```bash
-python src/main.py 6 -sessions 100 -save models/6x6_100sess.pth -visual off
+python main.py 6 -sessions 100 -save models/6x6_100sess.pth -visual off
 ```
 
 **Alternative:** You can also use `train.py` for training-only workflows:
 ```bash
-python src/train.py -sessions 10000 -save models/10000sess.pth -visual off
+python train.py -sessions 10000 -save models/10000sess.pth -visual off
 ```
 
 ### Evaluating Trained Models
@@ -75,7 +79,7 @@ python src/train.py -sessions 10000 -save models/10000sess.pth -visual off
 Run a trained model in evaluation mode (no learning) to test its performance:
 
 ```bash
-python src/main.py [grid_size] -load PATH -sessions N -dontlearn [-visual {on,off}] [-step-by-step]
+python main.py [grid_size] -load PATH -sessions N -dontlearn [-visual {on,off}] [-step-by-step]
 ```
 
 **Arguments:**
@@ -89,17 +93,17 @@ python src/main.py [grid_size] -load PATH -sessions N -dontlearn [-visual {on,of
 
 Evaluate a model visually over 10 sessions:
 ```bash
-python src/main.py -load models/100sess.pth -sessions 10 -dontlearn -visual on
+python main.py -load models/100sess.pth -sessions 10 -dontlearn -visual on
 ```
 
 Step-by-step evaluation (press Space/Enter to advance each move):
 ```bash
-python src/main.py -load models/100sess.pth -sessions 1 -dontlearn -step-by-step
+python main.py -load models/100sess.pth -sessions 1 -dontlearn -step-by-step
 ```
 
 Headless evaluation (fast performance testing):
 ```bash
-python src/main.py -load models/100sess.pth -sessions 100 -dontlearn -visual off
+python main.py -load models/100sess.pth -sessions 100 -dontlearn -visual off
 ```
 
 #### Controls during AI playback:
@@ -113,7 +117,7 @@ python src/main.py -load models/100sess.pth -sessions 100 -dontlearn -visual off
 Test the game yourself with keyboard controls:
 
 ```bash
-python src/main.py [grid_size] -player
+python main.py [grid_size] -player
 ```
 
 **Arguments:**
@@ -122,7 +126,7 @@ python src/main.py [grid_size] -player
 
 **Example:**
 ```bash
-python src/main.py 10 -player
+python main.py 10 -player
 ```
 
 #### Controls during gameplay:
