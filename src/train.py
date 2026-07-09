@@ -157,7 +157,6 @@ def train():
         epsilon = epsilon_start
         if agent.epsilon != -1:
             epsilon = agent.epsilon
-            max_score = max(max_score, agent.recorded_scores)
 
         for session in range(1, args.sessions + 1):
             game.reset()

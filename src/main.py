@@ -117,7 +117,7 @@ def run_evaluation(args, game, agent):
                 break
 
         print(
-            f"Game over, score= {max_length - 3}, "
+            f"Game over, score = {max_length - 3}, "
         )
 
 
@@ -130,12 +130,11 @@ def run_training(args, game, agent):
     epsilon = epsilon_start
     if agent.epsilon != -1:
         epsilon = agent.epsilon
-    max_score = max(0, agent.recorded_scores)
+    max_score = 0
 
     for session in range(1, args.sessions + 1):
         game.reset()
         score = 0
-        duration = 0
         for t in range(max_steps):
             state_old = agent.get_state(game)
             action = agent.get_action(state_old, epsilon)
@@ -144,7 +143,6 @@ def run_training(args, game, agent):
             reward, done, score = game.play_step(
                 move, step=step
             )
-            duration += 1
             if done:
                 state_new = state_old
             else:
