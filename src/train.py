@@ -191,13 +191,12 @@ def train():
             agent.epsilon = epsilon
             agent.recorded_scores = max_score
 
-            if session % 2 == 0 or session == args.sessions:
-                print(
-                    f"Session: {session}/{args.sessions}, "
-                    f"Max Score: {max_score}, "
-                    f"Current Score: {score}, "
-                    f"Avg Score: {np.mean(scores_of_episodes):.2f}"
-                )
+            print(
+                f"Session: {session}/{args.sessions}, "
+                f"Score: {score}, "
+                f"Avg Score: {np.mean(scores_of_episodes):.2f}"
+                f"Max Score: {max_score}, "
+            )
 
         if args.save:
             agent.save_model(args.save)
