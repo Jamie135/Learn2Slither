@@ -94,27 +94,46 @@ def parse_arguments():
     parser.add_argument(
         "-sessions",
         type=sessions_type,
-        default=10000,
-        help="Number of training sessions (default: 10000)"
+        default=1,
+        help="Number of training/evaluation sessions (default: 1)",
     )
     parser.add_argument(
         "-save",
         type=str,
         default=None,
-        help="Path to save the trained model (e.g., models/10sess.pth)"
+        help="Path to save the trained model (e.g., models/10sess.pth)",
     )
     parser.add_argument(
         "-load",
         type=str,
         default=None,
-        help="Path to load a previously trained model"
+        help="Path to load a trained model (e.g., models/100sess.pth)",
     )
     parser.add_argument(
         "-visual",
-        type=str,
-        choices=["on", "off"],
-        default="off",
-        help="Train with graphical UI (default: off for speed)"
+        action="store_true",
+        help="Enable or disable the graphical UI (default: on)",
+    )
+    parser.add_argument(
+        "-eval",
+        action="store_true",
+        help="Run without learning (evaluation mode)",
+    )
+    parser.add_argument(
+        "-step",
+        action="store_true",
+        dest="step",
+        help="Step-by-step mode (press Space/Enter to advance each move)",
+    )
+    parser.add_argument(
+        "-state",
+        action="store_true",
+        help="Display the snake state in the terminal after each move",
+    )
+    parser.add_argument(
+        "-player",
+        action="store_true",
+        help="Run the game in human player mode",
     )
     return parser.parse_args()
 
@@ -122,8 +141,8 @@ def parse_arguments():
 def train():
     try:
         args = parse_arguments()
-        no_ui = args.visual == "off"
-        game = Game(args.grid_size, no_ui=no_ui)
+        no_ui = not args.visual
+        game = Game(args.grid_size, no_ui=no_ui, show_state=False)
         agent = Agent(
             input_size,
             output_size,

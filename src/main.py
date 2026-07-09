@@ -68,21 +68,24 @@ def parse_arguments():
     )
     parser.add_argument(
         "-visual",
-        type=str,
-        choices=["on", "off"],
-        default="on",
+        action="store_true",
         help="Enable or disable the graphical UI (default: on)",
     )
     parser.add_argument(
-        "-dontlearn",
+        "-eval",
         action="store_true",
         help="Run without learning (evaluation mode)",
     )
     parser.add_argument(
-        "-step-by-step",
+        "-step",
         action="store_true",
-        dest="step_by_step",
+        dest="step",
         help="Step-by-step mode (press Space/Enter to advance each move)",
+    )
+    parser.add_argument(
+        "-state",
+        action="store_true",
+        help="Display the snake state in the terminal after each move",
     )
     parser.add_argument(
         "-player",
@@ -95,12 +98,11 @@ def parse_arguments():
 def run_evaluation(args, game, agent):
     """Run evaluation sessions (no learning)."""
     epsilon = 0.0
-    no_ui = args.visual == "off"
-    step_by_step = args.step_by_step
+    no_ui = not args.visual
+    step = args.step
 
     for session in range(1, args.sessions + 1):
         game.reset()
-        duration = 0
         max_length = game.snake.length
         for t in range(max_steps):
             state = agent.get_state(game)
@@ -108,23 +110,21 @@ def run_evaluation(args, game, agent):
             move = [0, 0, 0, 0]
             move[action] = 1
             reward, done, score = game.play_step(
-                move, step_by_step=step_by_step
+                move, step=step
             )
-            duration += 1
             max_length = max(max_length, game.snake.length)
             if done:
                 break
 
         print(
-            f"Game over, max length = {max_length}, "
-            f"max duration = {duration}"
+            f"Game over, score= {max_length - 3}, "
         )
 
 
 def run_training(args, game, agent):
     """Run training sessions."""
-    no_ui = args.visual == "off"
-    step_by_step = args.step_by_step
+    no_ui = not args.visual
+    step = args.step
     scores = deque(maxlen=100)
 
     epsilon = epsilon_start
@@ -142,7 +142,7 @@ def run_training(args, game, agent):
             move = [0, 0, 0, 0]
             move[action] = 1
             reward, done, score = game.play_step(
-                move, step_by_step=step_by_step
+                move, step=step
             )
             duration += 1
             if done:
@@ -186,8 +186,8 @@ def main():
             return
 
         # AI mode
-        no_ui = args.visual == "off"
-        game = Game(args.grid_size, no_ui=no_ui)
+        no_ui = not args.visual
+        game = Game(args.grid_size, no_ui=no_ui, show_state=args.state)
         agent = Agent(
             input_size=input_size,
             output_size=output_size,
@@ -199,7 +199,7 @@ def main():
         if args.load:
             agent.load_model(args.load)
 
-        if args.dontlearn:
+        if args.eval:
             run_evaluation(args, game, agent)
         else:
             run_training(args, game, agent)
@@ -209,7 +209,7 @@ def main():
     except KeyboardInterrupt:
         print("\nExecution interrupted by user.")
         try:
-            if not args.player and args.save and not args.dontlearn:
+            if not args.player and args.save and not args.eval:
                 agent.save_model(args.save)
                 print(f"Save learning state in {args.save}")
         except Exception:

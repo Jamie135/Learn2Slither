@@ -19,13 +19,14 @@ BLOCK_SIZE = 40
 
 
 class Game:
-    def __init__(self, grid_size, no_ui=False):
+    def __init__(self, grid_size, no_ui=False, show_state=False):
         """Initialise the game."""
         self.playable_grid_size = grid_size
         # Total grid, including the surrounding wall layer
         self.grid_size = grid_size + 2
         self.game_over = False
         self.no_ui = no_ui
+        self.show_state = show_state
         self.reward = 0
 
         if not self.no_ui:
@@ -307,7 +308,7 @@ class Game:
             print(" ".join(row_cells))
         print()
 
-    def play_step(self, action, step_by_step=False):
+    def play_step(self, action, step=False):
         """
         Execute one game step immediately (for AI control).
         Always steps regardless of UI mode. Renders if UI is on.
@@ -317,7 +318,7 @@ class Game:
         requested_direction = self._apply_direction(action)
         self.play()
 
-        if not self.no_ui:
+        if not self.no_ui and self.show_state:
             self._print_step_state(
                 requested_direction,
                 self.snake.direction.lower(),
@@ -346,7 +347,7 @@ class Game:
                 self.game_over_text()
             pygame.display.update()
 
-            if step_by_step:
+            if step:
                 self._wait_for_keypress()
             else:
                 # Control speed using timer value as delay
