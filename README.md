@@ -37,7 +37,7 @@ cd src/
 Train the AI agent using reinforcement learning. By default, training runs headless (no graphics) for maximum speed.
 
 ```bash
-python main.py [grid_size] [-sessions N] [-save PATH] [-load PATH] [-visual {on,off}]
+python main.py [grid_size] [-sessions N] [-save PATH] [-load PATH] [-visual]
 ```
 
 **Arguments:**
@@ -45,33 +45,34 @@ python main.py [grid_size] [-sessions N] [-save PATH] [-load PATH] [-visual {on,
 - `-sessions` — Number of training sessions (default: 1)
 - `-save` — Path to save the trained model (e.g., models/100sess.pth)
 - `-load` — Path to load a previously trained model to continue training
-- `-visual` — Enable or disable graphical UI (default: on; use off for faster training)
+- `-visual` — Enable graphical UI (disabled by default)
+- `-state` — Enable terminal display of the agent's state
 
 **Examples:**
 
 Train 10 sessions and save the model:
 ```bash
-python main.py -sessions 10 -save models/10sess.pth -visual off
+python main.py -sessions 10 -save models/10sess.pth
 ```
 
 Train 100 sessions, continuing from a saved model:
 ```bash
-python main.py -sessions 100 -load models/10sess.pth -save models/100sess.pth -visual off
+python main.py -sessions 100 -load models/10sess.pth -save models/100sess.pth
 ```
 
 Train with visualization (slower, but watch the AI learn):
 ```bash
-python main.py -sessions 100 -save models/100sess.pth -visual on
+python main.py -sessions 100 -save models/100sess.pth -visual
 ```
 
 Train on a different grid size (e.g., 6×6):
 ```bash
-python main.py 6 -sessions 100 -save models/6x6_100sess.pth -visual off
+python main.py 6 -sessions 100 -save models/6x6_100sess.pth
 ```
 
 **Alternative:** You can also use `train.py` for training-only workflows:
 ```bash
-python train.py -sessions 10000 -save models/10000sess.pth -visual off
+python train.py -sessions 10000 -save models/10000sess.pth -visual
 ```
 
 ### Evaluating Trained Models
@@ -79,37 +80,38 @@ python train.py -sessions 10000 -save models/10000sess.pth -visual off
 Run a trained model in evaluation mode (no learning) to test its performance:
 
 ```bash
-python main.py [grid_size] -load PATH -sessions N -dontlearn [-visual {on,off}] [-step-by-step]
+python main.py [grid_size] [-load PATH] [-sessions N] [-eval] [-visual] [-step]
 ```
 
 **Arguments:**
 - `-load` — Path to the trained model file (required)
 - `-sessions` — Number of evaluation sessions to run (default: 1)
-- `-dontlearn` — Disable learning (evaluation mode)
+- `-eval` — Disable learning (evaluation mode)
 - `-visual` — Show graphical UI (default: on)
-- `-step-by-step` — Step through each move with keypress (Space/Enter/arrows)
+- `-state` — Enable terminal display of the snake's state
+- `-step` — Step through each move with keypress (Space/Enter/arrows)
 
 **Examples:**
 
 Evaluate a model visually over 10 sessions:
 ```bash
-python main.py -load models/100sess.pth -sessions 10 -dontlearn -visual on
+python main.py -load models/100sess.pth -sessions 10 -eval -visual
 ```
 
-Step-by-step evaluation (press Space/Enter to advance each move):
+Step-by-step evaluation (press Space/Enter to advance each move) with the agent's state displayed on terminal:
 ```bash
-python main.py -load models/100sess.pth -sessions 1 -dontlearn -step-by-step
+python main.py -load models/100sess.pth -sessions 1 -eval -state -step
 ```
 
 Headless evaluation (fast performance testing):
 ```bash
-python main.py -load models/100sess.pth -sessions 100 -dontlearn -visual off
+python main.py -load models/100sess.pth -sessions 100 -eval -visual
 ```
 
 #### Controls during AI playback:
 - **1** — Decrease speed (longer intervals)
 - **2** — Increase speed (shorter intervals)
-- **Space/Enter/Arrows** — Advance one step (in step-by-step mode)
+- **Space/Enter/Arrows** — Advance one step (in step mode)
 - **Esc** — Quit
 
 ### Play Manually (Human Mode)
