@@ -11,8 +11,8 @@ from game import BLOCK_SIZE
 class ANN(nn.Module):
     def __init__(self, input_size, output_size):
         super(ANN, self).__init__()
-        self.fc1 = nn.Linear(input_size, 64)
-        self.fc2 = nn.Linear(64, output_size)
+        self.fc1 = nn.Linear(input_size, 256)
+        self.fc2 = nn.Linear(256, output_size)
 
     def forward(self, input):
         """

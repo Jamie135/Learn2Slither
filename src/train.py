@@ -20,7 +20,7 @@ epsilon_end = 0.001
 epsilon_decay = 0.97
 
 # rate at which the agent updates its weights
-learning_rate = 0.001
+learning_rate = 0.01
 
 # number of samples used in each training step
 minibatch_size = 100
@@ -34,8 +34,8 @@ replay_memory_capacity = int(1e5)
 # steps to interpolate target and online network
 # factor by which the target network is updated
 # 1 = target network is updated with the local network
-# 0.001 = target network is updated with 0.1% of the local network
-interpolation_steps = 1e-2
+# 0.05 = target network is updated with 5% of the local network
+interpolation_steps = 5e-2
 
 # number of input features
 # 20 features:

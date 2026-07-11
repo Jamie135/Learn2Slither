@@ -131,7 +131,7 @@ class Game:
     def play(self):
         """Move the snake and handle game logic."""
         self.snake.move()
-        self.reward = -0.1
+        self.reward = -0.01
         self.eats_apple()
         # If eating a red apple reduced the length to 0, the game is over;
         # avoid accessing self.snake.x[0] which would raise IndexError.

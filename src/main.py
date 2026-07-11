@@ -11,11 +11,11 @@ max_steps = 200000
 epsilon_start = 1.0
 epsilon_end = 0.001
 epsilon_decay = 0.97
-learning_rate = 0.001
+learning_rate = 0.01
 minibatch_size = 100
 gamma = 0.95
 replay_memory_capacity = int(1e5)
-interpolation_steps = 1e-2
+interpolation_steps = 5e-2
 input_size = 20
 output_size = 4
 
