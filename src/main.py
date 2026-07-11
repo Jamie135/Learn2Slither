@@ -16,7 +16,7 @@ minibatch_size = 100
 gamma = 0.95
 replay_memory_capacity = int(1e5)
 interpolation_steps = 1e-2
-input_size = 16
+input_size = 20
 output_size = 4
 
 

@@ -37,24 +37,12 @@ replay_memory_capacity = int(1e5)
 # 0.001 = target network is updated with 0.1% of the local network
 interpolation_steps = 1e-2
 
-# number of input features (bool of length 16)
-# 16 features:
-# - is_danger(point_left)
-# - is_danger(point_right)
-# - is_danger(point_up)
-# - is_danger(point_down)
-# - move direction (LEFT, RIGHT, UP, DOWN)
-# - closest green apple position relative to head
-#   - x < head_x
-#   - x > head_x
-#   - y < head_y
-#   - y > head_y
-# - red apple position relative to head
-#   - x < head_x
-#   - x > head_x
-#   - y < head_y
-#   - y > head_y
-input_size = 16
+# number of input features
+# 20 features:
+# - move direction (LEFT, RIGHT, UP, DOWN) [4 bits]
+# - 4 rays (left, right, up, down) with normalized distances [16 values]
+#   each ray contains: [wall_dist, body_dist, green_dist, red_dist]
+input_size = 20
 
 # number of possible actions
 output_size = 4

@@ -117,51 +117,76 @@ class Agent:
         self.recorded_scores = -1
         self.epsilon = -1
 
+    def scan_ray(self, game, dx, dy):
+        """Return normalized line-of-sight features for one direction."""
+        max_distance = max(1, game.grid_size - 2)
+
+        wall_distance = 0
+        body_distance = 0
+        green_distance = 0
+        red_distance = 0
+
+        x, y = game.snake.x[0], game.snake.y[0]
+        distance = 0
+
+        while True:
+            distance += 1
+            x += dx * BLOCK_SIZE
+            y += dy * BLOCK_SIZE
+
+            if (
+                x <= 0
+                or x >= (game.grid_size - 1) * BLOCK_SIZE
+                or y <= 0
+                or y >= (game.grid_size - 1) * BLOCK_SIZE
+            ):
+                wall_distance = distance
+                break
+
+            if body_distance == 0:
+                for i in range(1, game.snake.length):
+                    if game.snake.x[i] == x and game.snake.y[i] == y:
+                        body_distance = distance
+                        break
+
+            if green_distance == 0:
+                for apple in game.green_apples:
+                    if apple.x == x and apple.y == y:
+                        green_distance = distance
+                        break
+
+            if red_distance == 0 and game.red_apple.x == x and game.red_apple.y == y:
+                red_distance = distance
+
+        return [
+            wall_distance / max_distance,
+            body_distance / max_distance if body_distance else 0.0,
+            green_distance / max_distance if green_distance else 0.0,
+            red_distance / max_distance if red_distance else 0.0,
+        ]
+
     def get_state(self, game):
         """
-        Get the state of the game describing:
-        - the snake position
-        - its potential moves
-        - its potential danger
-        - its potential reward
+        Get the ray-based state of the game.
+
+        The state contains:
+        - the snake's current direction
+        - line-of-sight information in the 4 directions from the head
+          for walls, body, green apples, and the red apple
         """
-        head_x, head_y = game.snake.x[0], game.snake.y[0]
-
-        point_left = [head_x - BLOCK_SIZE, head_y]
-        point_right = [head_x + BLOCK_SIZE, head_y]
-        point_up = [head_x, head_y - BLOCK_SIZE]
-        point_down = [head_x, head_y + BLOCK_SIZE]
-
-        # Find the closest green apple
-        closest_green = min(
-            game.green_apples,
-            key=lambda a: abs(a.x - head_x) + abs(a.y - head_y)
-        )
-
         state = [
-            # is_danger will be implemented later
-            game.is_danger(point_left),
-            game.is_danger(point_right),
-            game.is_danger(point_up),
-            game.is_danger(point_down),
             # move direction
             game.snake.direction == "LEFT",
             game.snake.direction == "RIGHT",
             game.snake.direction == "UP",
             game.snake.direction == "DOWN",
-            # closest green apple position relative to head
-            closest_green.x < head_x,
-            closest_green.x > head_x,
-            closest_green.y < head_y,
-            closest_green.y > head_y,
-            # red apple position relative to head
-            game.red_apple.x < head_x,
-            game.red_apple.x > head_x,
-            game.red_apple.y < head_y,
-            game.red_apple.y > head_y,
         ]
 
-        return np.array(state, dtype=int)
+        # Left, right, up, down ray features.
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            state.extend(self.scan_ray(game, dx, dy))
+
+        return np.array(state, dtype=np.float32)
 
     def _valid_actions(self, state):
         """Return action indices that do not immediately reverse direction."""
