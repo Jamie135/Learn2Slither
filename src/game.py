@@ -28,6 +28,8 @@ class Game:
         self.no_ui = no_ui
         self.show_state = show_state
         self.reward = 0
+        # Why the last game ended: "wall", "self" or "length"
+        self.death_cause = None
 
         if not self.no_ui:
             screen_size = (
@@ -137,6 +139,7 @@ class Game:
         # avoid accessing self.snake.x[0] which would raise IndexError.
         if self.snake.length == 0:
             self.game_over = True
+            self.death_cause = "length"
             return
         if self.game_over:
             return
@@ -173,6 +176,7 @@ class Game:
             self.snake.decrease()
             if self.snake.length == 0:
                 self.game_over = True
+                self.death_cause = "length"
                 return
 
             occupied = {
@@ -198,6 +202,7 @@ class Game:
             or head_row == self.grid_size - 1
         ):
             self.game_over = True
+            self.death_cause = "wall"
             self.reward = -20
 
     def check_self_collision(self):
@@ -208,6 +213,7 @@ class Game:
         for i in range(1, self.snake.length):
             if (self.snake.x[i], self.snake.y[i]) == head_pos:
                 self.game_over = True
+                self.death_cause = "self"
                 self.reward = -20
                 break
 
@@ -215,6 +221,7 @@ class Game:
         """Reset the game to the initial state."""
         self.game_over = False
         self.reward = 0
+        self.death_cause = None
         self.snake = Snake(self.surface, self.grid_size)
         self.green_apples, self.red_apple = Apple.spawn_apples(
             self.surface,

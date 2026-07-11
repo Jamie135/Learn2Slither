@@ -4,6 +4,7 @@ from collections import deque
 from game import Game
 from player import Player
 from agent import Agent
+from stats import show_stats
 
 
 # Hyperparameters
@@ -98,8 +99,9 @@ def parse_arguments():
 def run_evaluation(args, game, agent):
     """Run evaluation sessions (no learning)."""
     epsilon = 0.0
-    no_ui = not args.visual
     step = args.step
+    session_scores = []
+    deaths = {"wall": 0, "self": 0, "length": 0}
 
     for session in range(1, args.sessions + 1):
         game.reset()
@@ -116,16 +118,26 @@ def run_evaluation(args, game, agent):
             if done:
                 break
 
+        session_scores.append(max_length - 3)
+        if game.death_cause in deaths:
+            deaths[game.death_cause] += 1
+
         print(
-            f"Game over, score = {max_length - 3}, "
+            f"Session: {session}/{args.sessions}, "
+            f"Score: {max_length - 3}, "
+            f"Avg Score: {np.mean(session_scores):.2f}, "
+            f"Max Score: {max(session_scores)}"
         )
+
+    show_stats("Evaluation", args.sessions, session_scores, deaths)
 
 
 def run_training(args, game, agent):
     """Run training sessions."""
-    no_ui = not args.visual
     step = args.step
     scores = deque(maxlen=100)
+    session_scores = []
+    deaths = {"wall": 0, "self": 0, "length": 0}
 
     epsilon = epsilon_start
     if agent.epsilon != -1:
@@ -135,6 +147,7 @@ def run_training(args, game, agent):
     for session in range(1, args.sessions + 1):
         game.reset()
         score = 0
+        session_max = 0
         for t in range(max_steps):
             state_old = agent.get_state(game)
             action = agent.get_action(state_old, epsilon)
@@ -143,6 +156,7 @@ def run_training(args, game, agent):
             reward, done, score = game.play_step(
                 move, step=step
             )
+            session_max = max(session_max, score)
             if done:
                 state_new = state_old
             else:
@@ -156,6 +170,9 @@ def run_training(args, game, agent):
 
         max_score = max(max_score, score)
         scores.append(score)
+        session_scores.append(session_max)
+        if game.death_cause in deaths:
+            deaths[game.death_cause] += 1
         epsilon = max(epsilon_end, epsilon * epsilon_decay)
         agent.epsilon = epsilon
         agent.recorded_scores = max_score
@@ -164,12 +181,14 @@ def run_training(args, game, agent):
             f"Session: {session}/{args.sessions}, "
             f"Score: {score}, "
             f"Avg Score: {np.mean(scores):.2f}, "
-            f"Max Score: {max_score}, "
+            f"Max Score: {max_score}"
         )
 
     if args.save:
         agent.save_model(args.save)
         print(f"Save learning state in {args.save}")
+
+    show_stats("Training", args.sessions, session_scores, deaths)
 
 
 def main():
