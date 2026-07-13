@@ -1,5 +1,4 @@
 import os
-import json
 import torch
 import random
 import numpy as np
@@ -301,7 +300,6 @@ class Agent:
                 # Legacy format: just state dict
                 self.local_network.load_state_dict(checkpoint)
                 self.traget_network.load_state_dict(checkpoint)
-                self.load_legacy_data()
             print(f"Load trained model from {file_path}")
             if self.recorded_scores != -1:
                 print(f"Recorded scores: {self.recorded_scores}")
@@ -309,18 +307,6 @@ class Agent:
                 print(f"Epsilon: {self.epsilon}")
         else:
             print(f"Model not found at {file_path}")
-
-    def load_legacy_data(self):
-        """Load data from legacy data.json file (backward compat)."""
-        model_path = os.path.join('./models/', 'data.json')
-        if os.path.exists(model_path):
-            with open(model_path, 'r') as file:
-                data = json.load(file)
-                if data is not None:
-                    self.recorded_scores = data.get(
-                        'recorded_scores', -1
-                    )
-                    self.epsilon = data.get('epsilon', -1)
 
     def save_model(self, file_path):
         """Save the model and learning state to a single file."""

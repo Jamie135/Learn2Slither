@@ -180,7 +180,7 @@ def run_training(args, game, agent):
         print(
             f"Session: {session}/{args.sessions}, "
             f"Score: {score}, "
-            f"Avg Score: {np.mean(scores):.2f}, "
+            f"Avg Score: {np.mean(session_scores):.2f}, "
             f"Max Score: {max_score}"
         )
 
