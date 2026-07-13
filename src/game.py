@@ -245,7 +245,7 @@ class Game:
             raise ValueError(f"Invalid action: {action}")
         return new_dir
 
-    def _apply_direction(self, action):
+    def apply_direction(self, action):
         """Apply direction from action array to the snake."""
         direction = self.next_direction(action)
         if direction == "right":
@@ -258,7 +258,7 @@ class Game:
             self.snake.move_down()
         return direction
 
-    def _cell_symbol(self, cell_col, cell_row):
+    def cell_symbol(self, cell_col, cell_row):
         """Return the symbol representing a board cell."""
         if (
             cell_col <= 0
@@ -293,7 +293,7 @@ class Game:
 
         return "0"
 
-    def _print_step_state(self, requested_direction, effective_direction):
+    def print_step_state(self, requested_direction, effective_direction):
         """Print the requested action, effective direction, and local vision."""
         print(f"Action taken: {effective_direction}")
 
@@ -309,7 +309,7 @@ class Game:
             row_cells = []
             for col in range(self.grid_size):
                 if col == head_col or row == head_row:
-                    row_cells.append(self._cell_symbol(col, row))
+                    row_cells.append(self.cell_symbol(col, row))
                 else:
                     row_cells.append(" ")
             print(" ".join(row_cells))
@@ -322,11 +322,11 @@ class Game:
         In step-by-step mode, waits for a key press before returning.
         Returns: (reward, game_over, score)
         """
-        requested_direction = self._apply_direction(action)
+        requested_direction = self.apply_direction(action)
         self.play()
 
         if not self.no_ui and self.show_state:
-            self._print_step_state(
+            self.print_step_state(
                 requested_direction,
                 self.snake.direction.lower(),
             )
@@ -355,14 +355,14 @@ class Game:
             pygame.display.update()
 
             if step:
-                self._wait_for_keypress()
+                self.wait_for_keypress()
             else:
                 # Control speed using timer value as delay
                 pygame.time.delay(self.timer)
 
         return self.reward, self.game_over, self.snake.length - 3
 
-    def _wait_for_keypress(self):
+    def wait_for_keypress(self):
         """Wait for Space, Enter, or arrow key to advance one step."""
         while True:
             for event in pygame.event.get():
@@ -383,7 +383,7 @@ class Game:
     def run(self, action):
         """Run one step of the game (legacy event-driven UI mode)."""
 
-        self._apply_direction(action)
+        self.apply_direction(action)
 
         if self.no_ui:
             self.play()

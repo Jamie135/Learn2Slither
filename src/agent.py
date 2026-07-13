@@ -188,22 +188,6 @@ class Agent:
 
         return np.array(state, dtype=np.float32)
 
-    def _valid_actions(self, state):
-        """Return action indices that do not immediately reverse direction."""
-        moving_left = bool(state[4])
-        moving_right = bool(state[5])
-        moving_up = bool(state[6])
-        moving_down = bool(state[7])
-
-        if moving_right:
-            return [0, 1, 3]
-        if moving_left:
-            return [1, 2, 3]
-        if moving_up:
-            return [0, 1, 2]
-        if moving_down:
-            return [0, 2, 3]
-        return [0, 1, 2, 3]
 
     def get_action(self, state, epsilon):
         """
@@ -317,7 +301,7 @@ class Agent:
                 # Legacy format: just state dict
                 self.local_network.load_state_dict(checkpoint)
                 self.traget_network.load_state_dict(checkpoint)
-                self._load_legacy_data()
+                self.load_legacy_data()
             print(f"Load trained model from {file_path}")
             if self.recorded_scores != -1:
                 print(f"Recorded scores: {self.recorded_scores}")
@@ -326,7 +310,7 @@ class Agent:
         else:
             print(f"Model not found at {file_path}")
 
-    def _load_legacy_data(self):
+    def load_legacy_data(self):
         """Load data from legacy data.json file (backward compat)."""
         model_path = os.path.join('./models/', 'data.json')
         if os.path.exists(model_path):
