@@ -97,9 +97,9 @@ class Agent:
         # local network for Q-values prediction of current state
         self.local_network = ANN(input_size, output_size).to(self.device)
         # target network for stable Q-values computation
-        self.traget_network = ANN(input_size, output_size).to(self.device)
+        self.target_network = ANN(input_size, output_size).to(self.device)
         # copy the weights from the local network to the target network
-        self.traget_network.load_state_dict(self.local_network.state_dict())
+        self.target_network.load_state_dict(self.local_network.state_dict())
         # Adam optimizer for local network, a gradient descent that:
         # - uses an adaptive learning rate for each parameter
         # - uses a momentum term to accelerate the convergence
@@ -241,7 +241,7 @@ class Agent:
         """Learn from the experiences."""
         states, actions, rewards, next_states, dones = experiences
         next_actions = (
-            self.traget_network(next_states).detach().max(1)[0].unsqueeze(1)
+            self.target_network(next_states).detach().max(1)[0].unsqueeze(1)
         )
         # compute the Q-targets using the Bellman equation:
         q_targets = rewards + gamma * next_actions * (1 - dones)
@@ -256,7 +256,7 @@ class Agent:
         # update the target network
         self.soft_update(
             self.local_network,
-            self.traget_network,
+            self.target_network,
             interpolation_steps
         )
 
@@ -285,7 +285,7 @@ class Agent:
                     checkpoint['model_state_dict']
                 )
                 if 'target_state_dict' in checkpoint:
-                    self.traget_network.load_state_dict(
+                    self.target_network.load_state_dict(
                         checkpoint['target_state_dict']
                     )
                 if 'optimizer_state_dict' in checkpoint:
@@ -299,7 +299,7 @@ class Agent:
             else:
                 # Legacy format: just state dict
                 self.local_network.load_state_dict(checkpoint)
-                self.traget_network.load_state_dict(checkpoint)
+                self.target_network.load_state_dict(checkpoint)
             print(f"Load trained model from {file_path}")
             if self.recorded_scores != -1:
                 print(f"Recorded scores: {self.recorded_scores}")
@@ -315,7 +315,7 @@ class Agent:
             os.makedirs(dir_name)
         checkpoint = {
             'model_state_dict': self.local_network.state_dict(),
-            'target_state_dict': self.traget_network.state_dict(),
+            'target_state_dict': self.target_network.state_dict(),
             'optimizer_state_dict': self.optimizer.state_dict(),
             'recorded_scores': self.recorded_scores,
             'epsilon': self.epsilon,
