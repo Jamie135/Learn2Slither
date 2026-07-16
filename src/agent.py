@@ -188,6 +188,20 @@ class Agent:
         return np.array(state, dtype=np.float32)
 
 
+    def valid_actions(self, state):
+        """Return action indices that do not immediately reverse direction."""
+        # state[0]=LEFT, state[1]=RIGHT, state[2]=UP, state[3]=DOWN
+        # actions: 0=right, 1=down, 2=left, 3=up
+        if state[0]:   # moving LEFT  -> can't go RIGHT (0)
+            return [1, 2, 3]
+        if state[1]:   # moving RIGHT -> can't go LEFT  (2)
+            return [0, 1, 3]
+        if state[2]:   # moving UP    -> can't go DOWN  (1)
+            return [0, 2, 3]
+        if state[3]:   # moving DOWN  -> can't go UP    (3)
+            return [0, 1, 2]
+        return [0, 1, 2, 3]
+
     def get_action(self, state, epsilon):
         """
         Get the action for the given state.

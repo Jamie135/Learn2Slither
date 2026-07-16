@@ -103,19 +103,25 @@ def run_evaluation(args, game, agent):
     session_scores = []
     deaths = {"wall": 0, "self": 0, "length": 0}
 
+    no_progress_limit = (game.grid_size * game.grid_size) // 2
+
     for session in range(1, args.sessions + 1):
         game.reset()
         max_length = game.snake.length
+        steps_since_apple = 0
         for t in range(max_steps):
             state = agent.get_state(game)
             action = agent.get_action(state, epsilon)
             move = [0, 0, 0, 0]
             move[action] = 1
-            reward, done, score = game.play_step(
-                move, step=step
-            )
+            prev_length = game.snake.length
+            reward, done, score = game.play_step(move, step=step)
+            if game.snake.length > prev_length:
+                steps_since_apple = 0
+            else:
+                steps_since_apple += 1
             max_length = max(max_length, game.snake.length)
-            if done:
+            if done or steps_since_apple >= no_progress_limit:
                 break
 
         session_scores.append(max_length - 3)
