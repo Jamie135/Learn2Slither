@@ -170,7 +170,7 @@ def run_training(args, game, agent):
 
         max_score = max(max_score, score)
         scores.append(score)
-        session_scores.append(session_max)
+        session_scores.append(score)
         if game.death_cause in deaths:
             deaths[game.death_cause] += 1
         epsilon = max(epsilon_end, epsilon * epsilon_decay)
