@@ -8,4 +8,3 @@ tabulate
 flake8
 pygame
 torch
-tensorflow
