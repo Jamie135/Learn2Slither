@@ -31,6 +31,10 @@ def parse_arguments():
             raise argparse.ArgumentTypeError(
                 "grid_size must be at least 4 (4x4 playable grid)."
             )
+        if grid > 20:
+            raise argparse.ArgumentTypeError(
+                "grid_size must be at most 20."
+            )
         return grid
 
     def sessions_type(value):
@@ -150,19 +154,29 @@ def run_training(args, game, agent):
         epsilon = agent.epsilon
     max_score = 0
 
+    no_progress_limit = (game.grid_size * game.grid_size) // 2
+
     for session in range(1, args.sessions + 1):
         game.reset()
         score = 0
         session_max = 0
+        steps_since_apple = 0
         for t in range(max_steps):
             state_old = agent.get_state(game)
             action = agent.get_action(state_old, epsilon)
             move = [0, 0, 0, 0]
             move[action] = 1
+            prev_score = score
             reward, done, score = game.play_step(
                 move, step=step
             )
+            if score > prev_score:
+                steps_since_apple = 0
+            else:
+                steps_since_apple += 1
             session_max = max(session_max, score)
+            if not done and steps_since_apple >= no_progress_limit:
+                done = True
             if done:
                 state_new = state_old
             else:
