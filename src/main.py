@@ -44,6 +44,10 @@ def parse_arguments():
             raise argparse.ArgumentTypeError(
                 "sessions must be at least 1."
             )
+        if sessions > 10000:
+            raise argparse.ArgumentTypeError(
+                "sessions must be at most 10000."
+            )
         return sessions
 
     parser = argparse.ArgumentParser(description="Snake Game - Learn2Slither")
