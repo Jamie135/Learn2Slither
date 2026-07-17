@@ -207,8 +207,9 @@ def main():
             return
 
         # AI mode
-        no_ui = not args.visual
-        game = Game(args.grid_size, no_ui=no_ui, show_state=args.state)
+        # Agent (PyTorch) must be constructed before Game (pygame/SDL)
+        # initialises its display, otherwise creating the Adam optimizer
+        # afterwards segfaults on some systems.
         agent = Agent(
             input_size=input_size,
             output_size=output_size,
@@ -216,6 +217,8 @@ def main():
             replay_memory_capacity=replay_memory_capacity,
             interpolation_steps=interpolation_steps,
         )
+        no_ui = not args.visual
+        game = Game(args.grid_size, no_ui=no_ui, show_state=args.state)
 
         if args.load:
             agent.load_model(args.load)
